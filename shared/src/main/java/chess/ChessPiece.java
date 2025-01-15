@@ -1,6 +1,8 @@
 package chess;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents a single chess piece
@@ -10,7 +12,27 @@ import java.util.Collection;
  */
 public class ChessPiece {
 
+    private ChessGame.TeamColor pieceColor;
+    private ChessPiece.PieceType type;
+    private int[][] moveOffsets;
+    private static Map<PieceType, int[][]> potentialMoves = null;
+
+    private void generatePotentialMoves() {
+        potentialMoves = new HashMap<PieceType, int[][]>();
+        potentialMoves.put(PieceType.KING, new int[][] { {0}, {1, 1}, {1, 0} });
+        potentialMoves.put(PieceType.QUEEN, new int[][] { {1}, {1, 1}, {1, 0} });
+        potentialMoves.put(PieceType.BISHOP, new int[][] { {1}, {1, 1} });
+        potentialMoves.put(PieceType.KNIGHT, new int[][] { {0}, {2, 1}, {1, 2} });
+        potentialMoves.put(PieceType.ROOK, new int[][] { {1}, {1, 0} });
+        potentialMoves.put(PieceType.PAWN, null);
+    }
+
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+        if (potentialMoves == null)
+            generatePotentialMoves();
+        this.pieceColor = pieceColor;
+        this.type = type;
+        this.moveOffsets = potentialMoves.get(type);
     }
 
     /**
@@ -36,7 +58,7 @@ public class ChessPiece {
      * @return which type of chess piece this piece is
      */
     public PieceType getPieceType() {
-        throw new RuntimeException("Not implemented");
+        return this.type;
     }
 
     /**
@@ -50,3 +72,4 @@ public class ChessPiece {
         throw new RuntimeException("Not implemented");
     }
 }
+

@@ -12,9 +12,10 @@ public class ChessPosition {
 
     private final int col, row;
     private static final char[] columns = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+
     public ChessPosition(int row, int col) {
-        this.col = col;
         this.row = row;
+        this.col = col;
     }
 
     /**
@@ -31,6 +32,14 @@ public class ChessPosition {
      */
     public int getColumn() {
         return col;
+    }
+
+    public ChessPosition offset(int rowOffset, int colOffset) {
+        return new ChessPosition(row + rowOffset, col + colOffset);
+    }
+
+    public ChessPosition offset(int...offsets) {
+        return offset(offsets[0], offsets[1]);
     }
 
     @Override

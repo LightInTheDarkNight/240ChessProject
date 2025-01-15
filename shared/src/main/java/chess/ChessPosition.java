@@ -42,6 +42,10 @@ public class ChessPosition {
         return offset(offsets[0], offsets[1]);
     }
 
+    public boolean onBoard(){
+        return !(row>8 || col>8 || row<1 || col<1);
+    }
+
     @Override
     public String toString() {
         return columns[col] + "(" + col + ")" + row;

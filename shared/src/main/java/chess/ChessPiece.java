@@ -106,7 +106,7 @@ public class ChessPiece implements Comparable<ChessPiece>{
             valid = endPosition.onBoard();
             do {
                 empty =  endPiece == null;
-                capture = !empty && endPiece.getTeamColor() == this.pieceColor;
+                capture = !empty && endPiece.getTeamColor() != this.pieceColor;
                 if(valid && (empty || capture))
                     moves.add(new ChessMove(myPosition, endPosition));
                 endPosition = endPosition.offset(offset);

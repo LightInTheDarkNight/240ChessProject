@@ -1,6 +1,9 @@
 package chess;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a single chess piece
@@ -8,25 +11,20 @@ import java.util.*;
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.
  */
-public class ChessPiece implements Comparable<ChessPiece>{
+public class ChessPiece implements Comparable<ChessPiece> {
 
-    private final ChessGame.TeamColor pieceColor;
-    private final ChessPiece.PieceType type;
-    private final int[][] moveOffsets;
-    private boolean hasMoved;
-    private int enPassant;
     private static final Map<PieceType, int[][]> potentialMoves = Map.of(
-            PieceType.PAWN, new int[][] {},
-            PieceType.KING, new int[][] {
-                    {1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1} },
-            PieceType.KNIGHT, new int[][] {
-                    {2, 1}, {1, 2}, {-2, 1}, {-1, 2}, {-2, -1}, {-1, -2}, {2, -1}, {1, -2}, },
-            PieceType.QUEEN, new int[][] {
-                    {1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1} },
-            PieceType.BISHOP, new int[][] {
-                    {1, 1}, {-1, 1}, {-1, -1}, {1, -1} },
-            PieceType.ROOK, new int[][] {
-                    {1, 0}, {0, 1}, {-1, 0}, {0, -1} }
+            PieceType.PAWN, new int[][]{},
+            PieceType.KING, new int[][]{
+                    {1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1}},
+            PieceType.KNIGHT, new int[][]{
+                    {2, 1}, {1, 2}, {-2, 1}, {-1, 2}, {-2, -1}, {-1, -2}, {2, -1}, {1, -2},},
+            PieceType.QUEEN, new int[][]{
+                    {1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1}},
+            PieceType.BISHOP, new int[][]{
+                    {1, 1}, {-1, 1}, {-1, -1}, {1, -1}},
+            PieceType.ROOK, new int[][]{
+                    {1, 0}, {0, 1}, {-1, 0}, {0, -1}}
     );
     private static final Map<PieceType, Boolean> continuousMoves = Map.of(
             PieceType.PAWN, false,
@@ -35,6 +33,11 @@ public class ChessPiece implements Comparable<ChessPiece>{
             PieceType.QUEEN, true,
             PieceType.BISHOP, true,
             PieceType.ROOK, true);
+    private final ChessGame.TeamColor pieceColor;
+    private final ChessPiece.PieceType type;
+    private final int[][] moveOffsets;
+    private boolean hasMoved;
+    private int enPassant;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type, boolean hasMoved) {
         this.pieceColor = pieceColor;
@@ -44,20 +47,8 @@ public class ChessPiece implements Comparable<ChessPiece>{
         this.enPassant = 0;
     }
 
-    public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type){
+    public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
         this(pieceColor, type, false);
-    }
-
-    /**
-     * The various different chess piece options
-     */
-    public enum PieceType {
-        KING,
-        QUEEN,
-        BISHOP,
-        KNIGHT,
-        ROOK,
-        PAWN
     }
 
     /**
@@ -74,9 +65,10 @@ public class ChessPiece implements Comparable<ChessPiece>{
         return this.type;
     }
 
-    public void setEnPassant(int enPassant) throws IllegalArgumentException{
-        if (Math.abs(enPassant) > 1)
+    public void setEnPassant(int enPassant) throws IllegalArgumentException {
+        if (Math.abs(enPassant) > 1) {
             throw new IllegalArgumentException();
+        }
         this.enPassant = enPassant;
     }
 
@@ -92,7 +84,7 @@ public class ChessPiece implements Comparable<ChessPiece>{
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        if(type == ChessPiece.PieceType.PAWN) {
+        if (type == ChessPiece.PieceType.PAWN) {
             return pawnMoves(board, myPosition);
         }
         HashSet<ChessMove> moves = new HashSet<>();
@@ -100,25 +92,28 @@ public class ChessPiece implements Comparable<ChessPiece>{
         ChessPiece endPiece;
         boolean valid, empty, capture;
         boolean continuous = continuousMoves.get(type);
-        for(var offset : moveOffsets) {
+        for (var offset : moveOffsets) {
             endPosition = myPosition.offset(offset);
             endPiece = board.getPiece(endPosition);
             valid = endPosition.onBoard();
             do {
-                empty =  endPiece == null;
+                empty = endPiece == null;
                 capture = !empty && endPiece.getTeamColor() != this.pieceColor;
-                if(valid && (empty || capture))
+                if (valid && (empty || capture)) {
                     moves.add(new ChessMove(myPosition, endPosition));
+                }
                 endPosition = endPosition.offset(offset);
                 endPiece = board.getPiece(endPosition);
                 valid = endPosition.onBoard();
             } while (continuous && empty && valid);
         }
-        if(type == ChessPiece.PieceType.KING && !hasMoved) {
-            if (canCastle(board, myPosition, true))
-                moves.add(new ChessMove(myPosition, myPosition.offset(0,-2)));
-            if (canCastle(board, myPosition, false))
-                moves.add(new ChessMove(myPosition, myPosition.offset(0,2)));
+        if (type == ChessPiece.PieceType.KING && !hasMoved) {
+            if (canCastle(board, myPosition, true)) {
+                moves.add(new ChessMove(myPosition, myPosition.offset(0, -2)));
+            }
+            if (canCastle(board, myPosition, false)) {
+                moves.add(new ChessMove(myPosition, myPosition.offset(0, 2)));
+            }
         }
         return moves;
     }
@@ -145,12 +140,13 @@ public class ChessPiece implements Comparable<ChessPiece>{
             endPosition = myPosition.offset(offset);
             endPiece = board.getPiece(endPosition);
             promotion = endPosition.getRow() == lastRow;
-            if(endPiece != null && endPiece.getTeamColor() != this.pieceColor) {
+            if (endPiece != null && endPiece.getTeamColor() != this.pieceColor) {
                 promotionCollator(myPosition, moves, endPosition, promotion);
             }
         }
-        if (enPassant != 0)
+        if (enPassant != 0) {
             moves.add(new ChessMove(myPosition, myPosition.offset(direction, enPassant)));
+        }
         do {
             endPosition = myPosition.offset(direction, 0);
             endPiece = board.getPiece(endPosition);
@@ -164,7 +160,8 @@ public class ChessPiece implements Comparable<ChessPiece>{
         return moves;
     }
 
-    private void promotionCollator(ChessPosition myPosition, HashSet<ChessMove> moves, ChessPosition endPosition, boolean promotion) {
+    private void promotionCollator(ChessPosition myPosition, HashSet<ChessMove> moves,
+                                   ChessPosition endPosition, boolean promotion) {
         if (promotion) {
             for (var type : PieceType.values()) {
                 if (type != PieceType.PAWN && type != PieceType.KING) {
@@ -177,22 +174,22 @@ public class ChessPiece implements Comparable<ChessPiece>{
     }
 
     private boolean canCastle(ChessBoard board, ChessPosition myPosition, boolean left) {
-        int[] rookOffset = left? new int[]{0, -4} : new int[]{0, 3};
-        int[] emptyOffset1 = left? new int[]{0, -3} : new int[]{0, 2};
-        int[] emptyOffset2 = left? new int[]{0, -2} : new int[]{0, 1};
-        int[] emptyOffset3 = left? new int[]{0, -1} : new int[]{0, 0};
+        int[] rookOffset = left ? new int[]{0, -4} : new int[]{0, 3};
+        int[] emptyOffset1 = left ? new int[]{0, -3} : new int[]{0, 2};
+        int[] emptyOffset2 = left ? new int[]{0, -2} : new int[]{0, 1};
+        int[] emptyOffset3 = left ? new int[]{0, -1} : new int[]{0, 0};
         ChessPiece rook = board.getPiece(myPosition.offset(rookOffset));
         boolean rookNotMoved = rook != null && rook.hasMoved;
-        boolean empty1 = board.getPiece(myPosition.offset(emptyOffset1))==null;
-        boolean empty2 = board.getPiece(myPosition.offset(emptyOffset2))==null;
-        boolean empty3 = board.getPiece(myPosition.offset(emptyOffset3))==null;
+        boolean empty1 = board.getPiece(myPosition.offset(emptyOffset1)) == null;
+        boolean empty2 = board.getPiece(myPosition.offset(emptyOffset2)) == null;
+        boolean empty3 = board.getPiece(myPosition.offset(emptyOffset3)) == null;
 
         return rookNotMoved && empty1 && empty2 && (!left || empty3);
     }
 
     @Override
     public int compareTo(ChessPiece o) {
-        return this.type.compareTo(o.type)*100 + this.pieceColor.compareTo(o.pieceColor);
+        return this.type.compareTo(o.type) * 100 + this.pieceColor.compareTo(o.pieceColor);
     }
 
     @Override
@@ -215,6 +212,18 @@ public class ChessPiece implements Comparable<ChessPiece>{
     @Override
     public int hashCode() {
         return Objects.hash(pieceColor, type);
+    }
+
+    /**
+     * The various different chess piece options
+     */
+    public enum PieceType {
+        KING,
+        QUEEN,
+        BISHOP,
+        KNIGHT,
+        ROOK,
+        PAWN
     }
 
 

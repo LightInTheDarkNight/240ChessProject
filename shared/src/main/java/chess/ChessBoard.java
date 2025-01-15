@@ -25,14 +25,14 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        int row = position.getRow() -1;
-        int column = position.getColumn() -1;
+        int row = position.getRow() - 1;
+        int column = position.getColumn() - 1;
         board[row][column] = piece;
     }
 
     public void removePiece(ChessPosition position) {
-        int row = position.getRow() -1;
-        int column = position.getColumn() -1;
+        int row = position.getRow() - 1;
+        int column = position.getColumn() - 1;
         board[row][column] = null;
     }
 
@@ -44,8 +44,8 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        int row = position.getRow() -1;
-        int column = position.getColumn() -1;
+        int row = position.getRow() - 1;
+        int column = position.getColumn() - 1;
         if (row < 0 || row >= 8 || column < 0 || column >= 8) {
             return null;
         }
@@ -68,7 +68,7 @@ public class ChessBoard {
                 ChessPiece.PieceType.ROOK
         };
         ChessGame.TeamColor color;
-        for(int column = 0; column < 8; column++) {
+        for (int column = 0; column < 8; column++) {
             color = ChessGame.TeamColor.WHITE;
             board[0][column] = new ChessPiece(color, pieceTypes[column]);
             board[1][column] = new ChessPiece(color, ChessPiece.PieceType.PAWN);

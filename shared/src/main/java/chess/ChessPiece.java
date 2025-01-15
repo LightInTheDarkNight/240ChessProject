@@ -192,7 +192,8 @@ public class ChessPiece implements Comparable<ChessPiece>{
         int[] emptyOffset1 = left? new int[]{0, -3} : new int[]{0, 2};
         int[] emptyOffset2 = left? new int[]{0, -2} : new int[]{0, 1};
         int[] emptyOffset3 = left? new int[]{0, -1} : new int[]{0, 0};
-        boolean rookNotMoved = board.getPiece(myPosition.offset(rookOffset)).hasMoved;
+        ChessPiece rook = board.getPiece(myPosition.offset(rookOffset));
+        boolean rookNotMoved = rook != null && rook.hasMoved;
         boolean empty1 = board.getPiece(myPosition.offset(emptyOffset1))==null;
         boolean empty2 = board.getPiece(myPosition.offset(emptyOffset2))==null;
         boolean empty3 = board.getPiece(myPosition.offset(emptyOffset3))==null;

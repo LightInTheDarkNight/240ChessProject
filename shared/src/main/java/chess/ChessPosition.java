@@ -10,8 +10,8 @@ import java.util.Objects;
  */
 public class ChessPosition implements Comparable<ChessPosition> {
 
+    private static final char[] COLUMNS = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
     private final int col, row;
-    private static final char[] columns = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
 
     public ChessPosition(int row, int col) {
         this.row = row;
@@ -38,12 +38,12 @@ public class ChessPosition implements Comparable<ChessPosition> {
         return new ChessPosition(row + rowOffset, col + colOffset);
     }
 
-    public ChessPosition offset(int...offsets) {
+    public ChessPosition offset(int... offsets) {
         return offset(offsets[0], offsets[1]);
     }
 
-    public boolean onBoard(){
-        return !(row>8 || col>8 || row<1 || col<1);
+    public boolean onBoard() {
+        return !(row > 8 || col > 8 || row < 1 || col < 1);
     }
 
 
@@ -54,7 +54,7 @@ public class ChessPosition implements Comparable<ChessPosition> {
 
     @Override
     public String toString() {
-        return "" + columns[col-1] + row;
+        return "" + COLUMNS[col - 1] + row;
     }
 
     @Override

@@ -31,14 +31,6 @@ public class ChessGame {
     }
 
     /**
-     * Enum identifying the 2 possible teams in a chess game
-     */
-    public enum TeamColor {
-        WHITE,
-        BLACK
-    }
-
-    /**
      * Gets a valid moves for a piece at the given location
      *
      * @param startPosition the piece to get valid moves for
@@ -91,6 +83,15 @@ public class ChessGame {
     }
 
     /**
+     * Gets the current chessboard
+     *
+     * @return the chessboard
+     */
+    public ChessBoard getBoard() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    /**
      * Sets this game's chessboard with a given board
      *
      * @param board the new board to use
@@ -100,11 +101,10 @@ public class ChessGame {
     }
 
     /**
-     * Gets the current chessboard
-     *
-     * @return the chessboard
+     * Enum identifying the 2 possible teams in a chess game
      */
-    public ChessBoard getBoard() {
-        throw new RuntimeException("Not implemented");
+    public enum TeamColor {
+        WHITE,
+        BLACK
     }
 }

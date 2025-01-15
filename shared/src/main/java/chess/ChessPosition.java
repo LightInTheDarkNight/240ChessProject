@@ -8,7 +8,7 @@ import java.util.Objects;
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.
  */
-public class ChessPosition {
+public class ChessPosition implements Comparable<ChessPosition> {
 
     private final int col, row;
     private static final char[] columns = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
@@ -46,9 +46,15 @@ public class ChessPosition {
         return !(row>8 || col>8 || row<1 || col<1);
     }
 
+
+    @Override
+    public int compareTo(ChessPosition other) {
+        return (this.row - other.row) * 2 + this.col - other.col;
+    }
+
     @Override
     public String toString() {
-        return columns[col] + "(" + col + ")" + row;
+        return "" + columns[col-1] + row;
     }
 
     @Override

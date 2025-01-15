@@ -8,7 +8,7 @@ import java.util.Objects;
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.
  */
-public class ChessMove {
+public class ChessMove implements Comparable<ChessMove> {
 
     private final ChessPosition startPosition, endPosition;
     private final ChessPiece.PieceType promotionPiece;
@@ -46,6 +46,13 @@ public class ChessMove {
      */
     public ChessPiece.PieceType getPromotionPiece() {
         return promotionPiece;
+    }
+
+    @Override
+    public int compareTo(ChessMove move) {
+        return this.startPosition.compareTo(move.startPosition) * 100
+                + this.endPosition.compareTo(move.endPosition) * 10
+                + promotionPiece.compareTo(move.promotionPiece);
     }
 
     @Override

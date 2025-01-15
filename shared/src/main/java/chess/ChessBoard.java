@@ -12,7 +12,7 @@ import java.util.Objects;
 public class ChessBoard {
 
 
-    private ChessPiece[][] board;
+    private final ChessPiece[][] board;
 
     public ChessBoard() {
         board = new ChessPiece[8][8];
@@ -75,6 +75,11 @@ public class ChessBoard {
             color = ChessGame.TeamColor.BLACK;
             board[6][column] = new ChessPiece(color, ChessPiece.PieceType.PAWN);
             board[7][column] = new ChessPiece(color, pieceTypes[column]);
+        }
+        for (int row = 2; row < 6; row++) {
+            for (int column = 0; column < 8; column++) {
+                board[row][column] = null;
+            }
         }
     }
 

@@ -161,17 +161,6 @@ public class ChessPiece implements Comparable<ChessPiece>{
             direction *= 2;
         } while (myPosition.getRow() == startRow && Math.abs(direction) == 2 && endPiece == null);
 
-//        HashSet<ChessMove> otherPromotionMoves = new HashSet<>();
-//        for(var move : moves) {
-//            if(move.getPromotionPiece() != null){
-//                for (var type : PieceType.values()){
-//                    if(type != PieceType.QUEEN && type != PieceType.PAWN && type != PieceType.KING){
-//                        otherPromotionMoves.add(new ChessMove(myPosition, endPosition, type));
-//                    }
-//                }
-//            }
-//        }
-//        moves.addAll(otherPromotionMoves);
         return moves;
     }
 

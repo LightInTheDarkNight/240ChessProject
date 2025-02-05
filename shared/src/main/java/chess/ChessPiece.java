@@ -1,9 +1,11 @@
 package chess;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+
+
 
 /**
  * Represents a single chess piece
@@ -11,39 +13,17 @@ import java.util.Objects;
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.
  */
-public class ChessPiece implements Comparable<ChessPiece> {
+public class ChessPiece implements Comparable<ChessPiece>, Cloneable{
 
-    private static final Map<PieceType, int[][]> POTENTIAL_MOVES = Map.of(
-            PieceType.PAWN, new int[][]{},
-            PieceType.KING, new int[][]{
-                    {1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1}},
-            PieceType.KNIGHT, new int[][]{
-                    {2, 1}, {1, 2}, {-2, 1}, {-1, 2}, {-2, -1}, {-1, -2}, {2, -1}, {1, -2},},
-            PieceType.QUEEN, new int[][]{
-                    {1, 1}, {1, 0}, {1, -1}, {0, 1}, {0, -1}, {-1, 1}, {-1, 0}, {-1, -1}},
-            PieceType.BISHOP, new int[][]{
-                    {1, 1}, {-1, 1}, {-1, -1}, {1, -1}},
-            PieceType.ROOK, new int[][]{
-                    {1, 0}, {0, 1}, {-1, 0}, {0, -1}}
-    );
-    private static final Map<PieceType, Boolean> CONTINUOUS_MOVES = Map.of(
-            PieceType.PAWN, false,
-            PieceType.KING, false,
-            PieceType.KNIGHT, false,
-            PieceType.QUEEN, true,
-            PieceType.BISHOP, true,
-            PieceType.ROOK, true);
-    private final ChessGame.TeamColor pieceColor;
-    private final ChessPiece.PieceType type;
-    private final int[][] moveOffsets;
+    private final ChessGame.TeamColor color;
+    private final PieceType type;
     private boolean hasMoved;
     private int enPassant;
 
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type, boolean hasMoved) {
-        this.pieceColor = pieceColor;
+        this.color = pieceColor;
         this.type = type;
         this.hasMoved = hasMoved;
-        this.moveOffsets = POTENTIAL_MOVES.get(type);
         this.enPassant = 0;
     }
 
@@ -51,18 +31,50 @@ public class ChessPiece implements Comparable<ChessPiece> {
         this(pieceColor, type, false);
     }
 
+
+    /**
+     * The various different chess piece options
+     */
+    public enum PieceType {
+        KING,
+        QUEEN,
+        BISHOP,
+        KNIGHT,
+        ROOK,
+        PAWN
+    }
+
+    private static final Map<PieceType, Boolean> CONTINUOUS = Map.of(
+            PieceType.KING, false,
+            PieceType.KNIGHT, false,
+            PieceType.PAWN, false,
+            PieceType.QUEEN, true,
+            PieceType.ROOK, true,
+            PieceType.BISHOP, true
+    );
+
+    private static final Map<PieceType, int[][]> OFFSETS = Map.of(
+            PieceType.KING, new int[][]{{-1, 1}, {0, 1}, {1, 1}, {-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {1, -1}},
+            PieceType.KNIGHT, new int[][]{{-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}},
+            PieceType.PAWN, new int[0][0],
+            PieceType.QUEEN, new int[][]{{-1, 1}, {0, 1}, {1, 1}, {-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {1, -1}},
+            PieceType.ROOK, new int[][]{{0, 1}, {-1, 0}, {1, 0}, {0, -1}},
+            PieceType.BISHOP, new int[][]{{-1, 1}, {1, 1}, {-1, -1}, {1, -1}}
+    );
+
+
     /**
      * @return Which team this chess piece belongs to
      */
     public ChessGame.TeamColor getTeamColor() {
-        return this.pieceColor;
+        return color;
     }
 
     /**
      * @return which type of chess piece this piece is
      */
     public PieceType getPieceType() {
-        return this.type;
+        return type;
     }
 
     public void setEnPassant(int enPassant) throws IllegalArgumentException {
@@ -84,120 +96,156 @@ public class ChessPiece implements Comparable<ChessPiece> {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        if (type == ChessPiece.PieceType.PAWN) {
-            return pawnMoves(board, myPosition);
+        if(type == PieceType.PAWN) return pawnMoves(board, myPosition);
+        Collection<ChessMove> moves = normalMoves(board, myPosition);
+        if(type == PieceType.KING){
+            ChessMove queenSideCastle = canCastle(board, myPosition, true);
+            if(queenSideCastle != null) moves.add(queenSideCastle);
+            ChessMove kingSideCastle = canCastle(board, myPosition, false);
+            if(kingSideCastle != null) moves.add(kingSideCastle);
         }
-        HashSet<ChessMove> moves = new HashSet<>();
-        ChessPosition endPosition;
-        ChessPiece endPiece;
-        boolean valid, empty, capture;
-        boolean continuous = CONTINUOUS_MOVES.get(type);
-        for (var offset : moveOffsets) {
-            endPosition = myPosition.offset(offset);
-            endPiece = board.getPiece(endPosition);
-            valid = endPosition.onBoard();
-            do {
-                empty = endPiece == null;
-                capture = !empty && endPiece.getTeamColor() != this.pieceColor;
-                if (valid && (empty || capture)) {
+        return moves;
+    }
+
+    private Collection<ChessMove> normalMoves(ChessBoard board, ChessPosition myPosition){
+        ArrayList<ChessMove> moves = new ArrayList<>();
+        boolean continuous = CONTINUOUS.get(type);
+        for(var direction : OFFSETS.get(type)){
+            ChessPosition endPosition = myPosition.offset(direction);
+            boolean previousWasOpen;
+            do{
+                if(validMove(board, endPosition)){
                     moves.add(new ChessMove(myPosition, endPosition));
                 }
-                endPosition = endPosition.offset(offset);
-                endPiece = board.getPiece(endPosition);
-                valid = endPosition.onBoard();
-            } while (continuous && empty && valid);
-        }
-        if (type == ChessPiece.PieceType.KING && !hasMoved) {
-            if (canCastle(board, myPosition, true)) {
-                moves.add(new ChessMove(myPosition, myPosition.offset(0, -2)));
-            }
-            if (canCastle(board, myPosition, false)) {
-                moves.add(new ChessMove(myPosition, myPosition.offset(0, 2)));
-            }
+                previousWasOpen = openSquare(board, endPosition);
+                endPosition = endPosition.offset(direction);
+            }while(continuous && previousWasOpen);
         }
         return moves;
     }
 
-    private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition) {
-        int direction = switch (pieceColor) {
-            case WHITE -> 1;
-            case BLACK -> -1;
-        };
-        int startRow = switch (pieceColor) {
-            case WHITE -> 2;
-            case BLACK -> 7;
-        };
-        int lastRow = switch (pieceColor) {
-            case WHITE -> 8;
-            case BLACK -> 1;
-        };
-        HashSet<ChessMove> moves = new HashSet<>();
-        ChessPosition endPosition;
-        ChessPiece endPiece;
-        boolean promotion;
-        int[][] captures = {{direction, 1}, {direction, -1}};
-        for (var offset : captures) {
-            endPosition = myPosition.offset(offset);
-            endPiece = board.getPiece(endPosition);
-            promotion = endPosition.getRow() == lastRow;
-            if (endPiece != null && endPiece.getTeamColor() != this.pieceColor) {
-                promotionCollator(myPosition, moves, endPosition, promotion);
-            }
-        }
-        if (enPassant != 0) {
-            moves.add(new ChessMove(myPosition, myPosition.offset(direction, enPassant)));
-        }
-        do {
-            endPosition = myPosition.offset(direction, 0);
-            endPiece = board.getPiece(endPosition);
-            promotion = endPosition.getRow() == lastRow;
-            if (endPosition.onBoard() && endPiece == null) {
-                promotionCollator(myPosition, moves, endPosition, promotion);
-            }
-            direction *= 2;
-        } while (myPosition.getRow() == startRow && Math.abs(direction) == 2 && endPiece == null);
+    private ChessMove canCastle(ChessBoard board, ChessPosition myPosition, boolean queenSide) {
+        if(hasMoved) return null;
 
-        return moves;
-    }
+        if(myPosition.getRow() % 7 != 1) return null;
 
-    private void promotionCollator(ChessPosition myPosition, HashSet<ChessMove> moves,
-                                   ChessPosition endPosition, boolean promotion) {
-        if (promotion) {
-            for (var type : PieceType.values()) {
-                if (type != PieceType.PAWN && type != PieceType.KING) {
-                    moves.add(new ChessMove(myPosition, endPosition, type));
-                }
-            }
-        } else {
-            moves.add(new ChessMove(myPosition, endPosition, null));
-        }
-    }
-
-    private boolean canCastle(ChessBoard board, ChessPosition myPosition, boolean left) {
-        int[] rookOffset = left ? new int[]{0, -4} : new int[]{0, 3};
-        int[] emptyOffset1 = left ? new int[]{0, -3} : new int[]{0, 2};
-        int[] emptyOffset2 = left ? new int[]{0, -2} : new int[]{0, 1};
-        int[] emptyOffset3 = left ? new int[]{0, -1} : new int[]{0, 0};
+        int[] rookOffset = queenSide ? new int[]{0, -4} : new int[]{0, 3};
         ChessPiece rook = board.getPiece(myPosition.offset(rookOffset));
-        boolean rookNotMoved = rook != null && rook.hasMoved;
-        boolean empty1 = board.getPiece(myPosition.offset(emptyOffset1)) == null;
-        boolean empty2 = board.getPiece(myPosition.offset(emptyOffset2)) == null;
-        boolean empty3 = board.getPiece(myPosition.offset(emptyOffset3)) == null;
+        if(rook == null) return null;
+        if(rook.hasMoved) return null;
+        if(rook.color != color) return null;
+        if(rook.type != PieceType.ROOK) return null;
 
-        return rookNotMoved && empty1 && empty2 && (!left || empty3);
+        int[][]emptyOffsets = queenSide ? new int[][]{{0, -3}, {0, -2}, {0, -1}} : new int[][]{{0, 2}, {0, 1}};
+        boolean middleEmpty = true;
+        for(var space : emptyOffsets){
+            middleEmpty = middleEmpty && openSquare(board, myPosition.offset(space));
+        }
+        if(!middleEmpty) return null;
+
+        int columnOffset = queenSide? -2 : 2;
+
+        return new ChessMove(myPosition, myPosition.offset(0, columnOffset));
+    }
+
+    private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition){
+        int direction = color == ChessGame.TeamColor.WHITE? 1 : -1;
+
+        ArrayList<ChessMove> protoMoves = checkPawnCaptures(board, myPosition, direction);
+
+        protoMoves.addAll(checkPawnAdvances(board, myPosition, direction));
+
+        ChessMove enPassantMove = enPassant(board, myPosition, direction);
+        if(enPassantMove != null && ! protoMoves.contains(enPassantMove)) protoMoves.add(enPassantMove);
+
+        return permutePawnPromotions(myPosition, direction, protoMoves);
+    }
+
+    private ArrayList<ChessMove> checkPawnCaptures(ChessBoard board, ChessPosition myPosition, int direction) {
+        ArrayList<ChessMove> moves = new ArrayList<>();
+
+        final int[][] CAPTURE_OFFSETS = new int[][] {{direction, 1}, {direction, -1}};
+        for(var capture : CAPTURE_OFFSETS){
+            ChessPosition endPosition = myPosition.offset(capture);
+            if(validCapture(board, endPosition)){
+                moves.add(new ChessMove(myPosition, endPosition));
+            }
+        }
+        return moves;
+    }
+
+    private ArrayList<ChessMove> checkPawnAdvances(ChessBoard board, ChessPosition myPosition, int direction) {
+        ArrayList<ChessMove> moves = new ArrayList<>();
+        int startRow = direction == 1? 2 : 7;
+        final int[][] OPEN_OFFSETS = myPosition.getRow() == startRow?
+                new int[][] {{direction, 0}, {2 * direction, 0}} : new int[][] {{direction, 0}};
+        boolean firstSquareOpen = true;
+        for(var open : OPEN_OFFSETS){
+            ChessPosition endPosition = myPosition.offset(open);
+            if(firstSquareOpen && openSquare(board, endPosition)){
+                moves.add(new ChessMove(myPosition, endPosition));
+            }else{
+                firstSquareOpen = false;
+            }
+        }
+        return moves;
+    }
+
+    private ChessMove enPassant(ChessBoard board, ChessPosition myPosition, int direction){
+        if(enPassant == 0) return null;
+
+        int startRow = direction == 1? 2 : 7;
+        int enPassantRow = startRow + 3 * direction;
+        if(myPosition.getRow() != enPassantRow) return null;
+
+        ChessPiece foe = board.getPiece(myPosition.offset(enPassant, 0));
+        if(foe == null || foe.color == color || foe.type != PieceType.PAWN) return null;
+
+        return new ChessMove(myPosition, myPosition.offset(enPassant, direction));
+
+    }
+
+    private static ArrayList<ChessMove> permutePawnPromotions(
+            ChessPosition myPosition, int direction, ArrayList<ChessMove> protoMoves) {
+
+        int promoRow = direction == 1? 8 : 1;
+        ArrayList<ChessMove> moves = new ArrayList<>();
+        for(var move : protoMoves){
+            if(move.getEndPosition().getRow() == promoRow){
+                for(var promoType : PieceType.values()){
+                    if(promoType != PieceType.KING && promoType != PieceType.PAWN){
+                        moves.add(new ChessMove(myPosition, move.getEndPosition(), promoType));
+                    }
+                }
+            } else {
+                moves.add(move);
+            }
+        }
+        return moves;
+    }
+
+    private boolean validCapture(ChessBoard board, ChessPosition endPosition){
+        if(board.notOnBoard(endPosition)){
+            return false;
+        }
+        ChessPiece other = board.getPiece(endPosition);
+        return other != null && other.color != color;
+    }
+
+    private boolean openSquare(ChessBoard board, ChessPosition endPosition){
+        if(board.notOnBoard(endPosition)){
+            return false;
+        }
+        return board.getPiece(endPosition) == null;
+    }
+
+    private boolean validMove(ChessBoard board, ChessPosition endPosition){
+        return openSquare(board, endPosition) || validCapture(board, endPosition);
     }
 
     @Override
     public int compareTo(ChessPiece o) {
-        return this.type.compareTo(o.type) * 100 + this.pieceColor.compareTo(o.pieceColor);
-    }
-
-    @Override
-    public String toString() {
-        return "ChessPiece{" +
-                "type=" + type +
-                ", pieceColor=" + pieceColor +
-                '}';
+        return this.color.compareTo(o.color) * 31 + this.type.compareTo(o.type);
     }
 
     @Override
@@ -206,26 +254,22 @@ public class ChessPiece implements Comparable<ChessPiece> {
             return false;
         }
         ChessPiece that = (ChessPiece) o;
-        return pieceColor == that.pieceColor && type == that.type;
+        return color == that.color && type == that.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pieceColor, type);
+        return Objects.hash(color, type);
     }
 
-    /**
-     * The various different chess piece options
-     */
-    public enum PieceType {
-        KING,
-        QUEEN,
-        BISHOP,
-        KNIGHT,
-        ROOK,
-        PAWN
+    @Override
+    public String toString(){
+        String typeString = String.valueOf(type);
+        return "" + String.valueOf(color).charAt(0) + typeString.charAt(0) + typeString.toLowerCase().charAt(1);
     }
 
-
+    @Override
+    public ChessPiece clone() throws CloneNotSupportedException{
+        return (ChessPiece) super.clone();
+    }
 }
-

@@ -11,11 +11,36 @@ import java.util.Objects;
  */
 public class ChessBoard {
 
-
-    private final ChessPiece[][] board;
+    private final ChessPiece[][] board = new ChessPiece[8][8];
+    private static final ChessPiece.PieceType[] PIECE_ORDER = new ChessPiece.PieceType[] {
+            ChessPiece.PieceType.ROOK,
+            ChessPiece.PieceType.KNIGHT,
+            ChessPiece.PieceType.BISHOP,
+            ChessPiece.PieceType.QUEEN,
+            ChessPiece.PieceType.KING,
+            ChessPiece.PieceType.BISHOP,
+            ChessPiece.PieceType.KNIGHT,
+            ChessPiece.PieceType.ROOK
+    };
 
     public ChessBoard() {
-        board = new ChessPiece[8][8];
+
+    }
+
+    public static ChessBoard newGameBoard(){
+        var board = new ChessBoard();
+        board.resetBoard();
+        return board;
+    }
+
+    public boolean notOnBoard(ChessPosition pos){
+        int row = pos.getRow()-1;
+        int col = pos.getColumn() -1;
+        return row < 0 || row > 7 || col < 0 || col > 7;
+    }
+
+    public boolean onBoard(ChessPosition pos){
+        return !notOnBoard(pos);
     }
 
     /**
@@ -25,15 +50,13 @@ public class ChessBoard {
      * @param piece    the piece to add
      */
     public void addPiece(ChessPosition position, ChessPiece piece) {
-        int row = position.getRow() - 1;
-        int column = position.getColumn() - 1;
-        board[row][column] = piece;
+        if(notOnBoard(position)) return;
+        board[position.getRow() -1][position.getColumn() -1] = piece;
     }
 
     public void removePiece(ChessPosition position) {
-        int row = position.getRow() - 1;
-        int column = position.getColumn() - 1;
-        board[row][column] = null;
+        if(notOnBoard(position)) return;
+        board[position.getRow() - 1][position.getColumn() - 1] = null;
     }
 
     /**
@@ -44,43 +67,31 @@ public class ChessBoard {
      * position
      */
     public ChessPiece getPiece(ChessPosition position) {
-        int row = position.getRow() - 1;
-        int column = position.getColumn() - 1;
-        if (row < 0 || row >= 8 || column < 0 || column >= 8) {
-            return null;
-        }
-        return board[row][column];
+        if(notOnBoard(position)) return null;
+        return board[position.getRow() -1][position.getColumn() -1];
     }
+
 
     /**
      * Sets the board to the default starting board
      * (How the game of chess normally starts)
      */
     public void resetBoard() {
-        ChessPiece.PieceType[] pieceTypes = {
-                ChessPiece.PieceType.ROOK,
-                ChessPiece.PieceType.KNIGHT,
-                ChessPiece.PieceType.BISHOP,
-                ChessPiece.PieceType.QUEEN,
-                ChessPiece.PieceType.KING,
-                ChessPiece.PieceType.BISHOP,
-                ChessPiece.PieceType.KNIGHT,
-                ChessPiece.PieceType.ROOK
-        };
         ChessGame.TeamColor color;
-        for (int column = 0; column < 8; column++) {
+        for(int column = 0; column < 8; column++){
             color = ChessGame.TeamColor.WHITE;
-            board[0][column] = new ChessPiece(color, pieceTypes[column]);
+            board[0][column] = new ChessPiece(color, PIECE_ORDER[column]);
             board[1][column] = new ChessPiece(color, ChessPiece.PieceType.PAWN);
             color = ChessGame.TeamColor.BLACK;
             board[6][column] = new ChessPiece(color, ChessPiece.PieceType.PAWN);
-            board[7][column] = new ChessPiece(color, pieceTypes[column]);
+            board[7][column] = new ChessPiece(color, PIECE_ORDER[column]);
         }
-        for (int row = 2; row < 6; row++) {
-            for (int column = 0; column < 8; column++) {
+        for(int row = 2; row < 6; row++){
+            for(int column = 0; column < 8; column++){
                 board[row][column] = null;
             }
         }
+
     }
 
     @Override
@@ -99,8 +110,15 @@ public class ChessBoard {
 
     @Override
     public String toString() {
-        return "ChessBoard{" +
-                "board=" + Arrays.toString(board) +
-                '}';
+        StringBuilder s = new StringBuilder();
+        for(int j = 7; j >= 0; j--){
+            for(int i = 0; i < 8; i++){
+                s.append("|");
+                ChessPiece piece = board[j][i];
+                s.append(piece == null? "   " : piece.toString());
+            }
+            s.append("|\n");
+        }
+        return s.toString();
     }
 }

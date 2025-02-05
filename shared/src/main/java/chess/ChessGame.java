@@ -10,9 +10,14 @@ import java.util.Collection;
  */
 public class ChessGame {
 
-    public ChessGame() {
-
+    private TeamColor currentTurn = TeamColor.WHITE;
+    private ChessBoard board = ChessBoard.newGameBoard();
+    public ChessGame() {}
+    public ChessGame(TeamColor startColor, ChessBoard startPosition){
+        currentTurn = startColor;
+        board = startPosition;
     }
+
 
     /**
      * @return Which team's turn it is

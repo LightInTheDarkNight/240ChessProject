@@ -224,7 +224,7 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable{
     }
 
     private boolean validCapture(ChessBoard board, ChessPosition endPosition){
-        if(board.notOnBoard(endPosition)){
+        if(ChessBoard.notOnBoard(endPosition)){
             return false;
         }
         ChessPiece other = board.getPiece(endPosition);
@@ -232,13 +232,16 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable{
     }
 
     private boolean openSquare(ChessBoard board, ChessPosition endPosition){
-        if(board.notOnBoard(endPosition)){
+        if(ChessBoard.notOnBoard(endPosition)){
             return false;
         }
         return board.getPiece(endPosition) == null;
     }
 
     private boolean validMove(ChessBoard board, ChessPosition endPosition){
+        if(ChessBoard.notOnBoard(endPosition)){
+            return false;
+        }
         return openSquare(board, endPosition) || validCapture(board, endPosition);
     }
 

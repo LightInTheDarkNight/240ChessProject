@@ -65,11 +65,13 @@ public class ChessGame {
     private boolean moveCausesCheck(ChessMove move){
         ChessPosition start = move.getStartPosition();
         ChessPosition end = move.getEndPosition();
-        ChessPiece startPiece = board.getPiece(start).clone();
+        ChessPiece startPiece = board.getPiece(start);
         if(startPiece == null) return true;
+        startPiece = startPiece.clone();
         TeamColor team = startPiece.getTeamColor();
 
         ChessPiece endPiece = board.getPiece(end);
+        if(endPiece != null) endPiece = endPiece.clone();
         boolean out;
         if(endPiece != null && endPiece.getPieceType() == ChessPiece.PieceType.KING){
             board.removePiece(start);
@@ -101,7 +103,8 @@ public class ChessGame {
      * @throws InvalidMoveException if move is invalid
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
-        if(!validMoves(move.getStartPosition()).contains(move)) throw new InvalidMoveException("Invalid move: " + move);
+        var valids = validMoves(move.getStartPosition());
+        if(valids==null || !valids.contains(move)) throw new InvalidMoveException("Invalid move: " + move);
         hardMove(move);
         currentTurn = switch (currentTurn){
             case BLACK -> TeamColor.WHITE;

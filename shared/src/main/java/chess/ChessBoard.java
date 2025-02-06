@@ -34,13 +34,13 @@ public class ChessBoard {
         return board;
     }
 
-    public boolean notOnBoard(ChessPosition pos){
+    public static boolean notOnBoard(ChessPosition pos){
         int row = pos.getRow();
         int col = pos.getColumn();
         return row < 1 || row > 8 || col < 1 || col > 8;
     }
 
-    public boolean onBoard(ChessPosition pos){
+    public static boolean onBoard(ChessPosition pos){
         return !notOnBoard(pos);
     }
 
@@ -88,9 +88,11 @@ public class ChessBoard {
         ArrayList<ChessMove> moves = new ArrayList<>();
         for(int row = 0; row < 8; row++){
             for(int column = 0; column < 8; column++){
-                ChessPosition pos = new ChessPosition(row, column);
+                ChessPosition pos = new ChessPosition(row+1, column+1);
                 ChessPiece piece = board[row][column];
-                if(piece != null && piece.getTeamColor() != filter) moves.addAll(piece.pieceMoves(this, pos));
+                if(piece != null && piece.getTeamColor() != filter) {
+                    moves.addAll(piece.pieceMoves(this, pos));
+                }
             }
         }
         return moves;

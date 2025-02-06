@@ -57,11 +57,8 @@ public class ChessMove implements Comparable<ChessMove> {
 
     @Override
     public String toString() {
-        return "ChessMove{" +
-                "startPosition=" + startPosition +
-                ", endPosition=" + endPosition +
-                ", promotionPiece=" + promotionPiece +
-                '}';
+        String promo = promotionPiece == null? "" : promotionPiece + " ";
+        return startPosition + " -> " + promo + endPosition;
     }
 
     @Override

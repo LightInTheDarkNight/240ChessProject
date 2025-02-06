@@ -1,7 +1,6 @@
 package chess;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
@@ -13,7 +12,7 @@ import java.util.Objects;
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.
  */
-public class ChessPiece implements Comparable<ChessPiece>, Cloneable{
+public final class ChessPiece implements Comparable<ChessPiece>, Cloneable{
 
     private final ChessGame.TeamColor color;
     private final PieceType type;
@@ -95,9 +94,9 @@ public class ChessPiece implements Comparable<ChessPiece>, Cloneable{
      *
      * @return Collection of valid moves
      */
-    public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
+    public ArrayList<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
         if(type == PieceType.PAWN) return pawnMoves(board, myPosition);
-        Collection<ChessMove> moves = normalMoves(board, myPosition);
+        ArrayList<ChessMove> moves = normalMoves(board, myPosition);
         if(type == PieceType.KING){
             ChessMove queenSideCastle = canCastle(board, myPosition, true);
             if(queenSideCastle != null) moves.add(queenSideCastle);
@@ -107,7 +106,7 @@ public class ChessPiece implements Comparable<ChessPiece>, Cloneable{
         return moves;
     }
 
-    private Collection<ChessMove> normalMoves(ChessBoard board, ChessPosition myPosition){
+    private ArrayList<ChessMove> normalMoves(ChessBoard board, ChessPosition myPosition){
         ArrayList<ChessMove> moves = new ArrayList<>();
         boolean continuous = CONTINUOUS.get(type);
         for(var direction : OFFSETS.get(type)){
@@ -148,7 +147,7 @@ public class ChessPiece implements Comparable<ChessPiece>, Cloneable{
         return new ChessMove(myPosition, myPosition.offset(0, columnOffset));
     }
 
-    private Collection<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition){
+    private ArrayList<ChessMove> pawnMoves(ChessBoard board, ChessPosition myPosition){
         int direction = color == ChessGame.TeamColor.WHITE? 1 : -1;
 
         ArrayList<ChessMove> protoMoves = checkPawnCaptures(board, myPosition, direction);
@@ -269,7 +268,11 @@ public class ChessPiece implements Comparable<ChessPiece>, Cloneable{
     }
 
     @Override
-    public ChessPiece clone() throws CloneNotSupportedException{
-        return (ChessPiece) super.clone();
+    public ChessPiece clone(){
+        try{
+            return (ChessPiece) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

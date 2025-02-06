@@ -42,10 +42,17 @@ public class ChessPosition implements Comparable<ChessPosition> {
         return offset(offsets[0], offsets[1]);
     }
 
-    public boolean onBoard() {
-        return !(row > 8 || col > 8 || row < 1 || col < 1);
+    /**
+     * Returns the difference between two ChessPosition objects in the form [rowDifference, columnDifference]. As a
+     * result, positionB.equals(positionA.offset(positionA.difference(positionB))) should always return true.
+     *
+     * @return the difference between this and other in [rowDifference, columnDifference] format,
+     * or null if other is null
+     * */
+    public int[] difference(ChessPosition other){
+        if(other == null) return null;
+        return new int[] {this.row - other.row, this.col - other.col};
     }
-
 
     @Override
     public int compareTo(ChessPosition other) {

@@ -48,10 +48,12 @@ public class ChessPosition implements Comparable<ChessPosition> {
      *
      * @return the difference between this and other in [rowDifference, columnDifference] format,
      * or null if other is null
-     * */
-    public int[] difference(ChessPosition other){
-        if(other == null) return null;
-        return new int[] {this.row - other.row, this.col - other.col};
+     */
+    public int[] difference(ChessPosition other) {
+        if (other == null) {
+            return null;
+        }
+        return new int[]{this.row - other.row, this.col - other.col};
     }
 
     @Override

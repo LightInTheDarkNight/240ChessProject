@@ -43,9 +43,9 @@ public class ChessBoard {
         return row < 1 || row > 8 || col < 1 || col > 8;
     }
 
-    public static boolean onBoard(ChessPosition pos) {
-        return !notOnBoard(pos);
-    }
+//    public static boolean onBoard(ChessPosition pos) {
+//        return !notOnBoard(pos);
+//    }
 
     /**
      * Adds a chess piece to the chessboard
@@ -105,18 +105,18 @@ public class ChessBoard {
 
     }
 
-    public ArrayList<ChessPosition> getTeamPositions(ChessGame.TeamColor team) {
-        ArrayList<ChessPosition> positions = new ArrayList<>();
-        for (int row = 0; row < 8; row++) {
-            for (int column = 0; column < 8; column++) {
-                ChessPiece piece = board[row][column];
-                if (piece != null && piece.getTeamColor() == team) {
-                    positions.add(new ChessPosition(row + 1, column + 1));
-                }
-            }
-        }
-        return positions;
-    }
+//    public ArrayList<ChessPosition> getTeamPositions(ChessGame.TeamColor team) {
+//        ArrayList<ChessPosition> positions = new ArrayList<>();
+//        for (int row = 0; row < 8; row++) {
+//            for (int column = 0; column < 8; column++) {
+//                ChessPiece piece = board[row][column];
+//                if (piece != null && piece.getTeamColor() == team) {
+//                    positions.add(new ChessPosition(row + 1, column + 1));
+//                }
+//            }
+//        }
+//        return positions;
+//    }
 
     public ChessPosition getKingPosition(ChessGame.TeamColor color) {
         for (int row = 0; row < 8; row++) {

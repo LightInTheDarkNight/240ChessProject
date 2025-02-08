@@ -12,8 +12,6 @@ public class ChessGame {
 
     private TeamColor currentTurn = TeamColor.WHITE;
     private ChessBoard board = ChessBoard.newGameBoard();
-//    private boolean blackInCheck = false;
-//    private boolean whiteInCheck = false;
 
     public ChessGame() {
     }
@@ -155,13 +153,14 @@ public class ChessGame {
      */
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
-        var valids = validMoves(move.getStartPosition());
-        if (valids == null || !valids.contains(move) || currentTurn != piece.getTeamColor()) {
+        var moveOptions = validMoves(move.getStartPosition());
+        if (moveOptions == null || !moveOptions.contains(move) || currentTurn != piece.getTeamColor()) {
             throw new InvalidMoveException("Invalid move: " + move);
         }
 
         hardMove(move);
         currentTurn = currentTurn.other();
+        piece.setHasMoved(true);
     }
 
     /**
@@ -226,7 +225,8 @@ public class ChessGame {
 
     /**
      * Calculates all moves the opponent could make that end on the given position.
-     * @returns the moves of the opposite team of the one occupying the passed position that end on that position, not
+     * @param position the position to find the attackers of
+     * @return the moves of the opposite team of the one occupying the passed position that end on that position, not
      * filtered for validity.
      * */
     private Collection<ChessMove> rawAttacks(ChessPosition position){

@@ -18,14 +18,14 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
     private boolean hasMoved;
     private int enPassant;
 
-    public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type, boolean hasMoved) {
+    public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type, boolean hasMoved) {
         this.color = pieceColor;
         this.type = type;
         this.hasMoved = hasMoved;
         this.enPassant = 0;
     }
 
-    public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+    public ChessPiece(ChessGame.TeamColor pieceColor, PieceType type) {
         this(pieceColor, type, false);
     }
 
@@ -34,31 +34,41 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
      * The various different chess piece options
      */
     public enum PieceType {
-        KING,
-        QUEEN,
-        BISHOP,
-        KNIGHT,
-        ROOK,
-        PAWN
+        KING, QUEEN, BISHOP, KNIGHT, ROOK, PAWN;
+        private static final Map<PieceType, int[][]> OFFSETS = Map.of(
+                PieceType.KING, new int[][]{{-1, 1}, {0, 1}, {1, 1}, {-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {1, -1}},
+                PieceType.KNIGHT, new int[][]{{-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}},
+                PieceType.PAWN, new int[0][0],
+                PieceType.QUEEN, new int[][]{{-1, 1}, {0, 1}, {1, 1}, {-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {1, -1}},
+                PieceType.ROOK, new int[][]{{0, 1}, {-1, 0}, {1, 0}, {0, -1}},
+                PieceType.BISHOP, new int[][]{{-1, 1}, {1, 1}, {-1, -1}, {1, -1}}
+        );
+
+        public String abbreviation(){
+            return switch(this){
+                case KING -> "K";
+                case QUEEN -> "Q";
+                case BISHOP -> "B";
+                case KNIGHT -> "N";
+                case ROOK -> "R";
+                case PAWN -> "P";
+            };
+        }
+        public boolean continuous(){
+            return switch(this){
+                case KING -> false;
+                case QUEEN -> true;
+                case BISHOP -> true;
+                case KNIGHT -> false;
+                case ROOK -> true;
+                case PAWN -> false;
+            };
+        }
+        public int[][] offsets(){
+            return OFFSETS.get(this);
+        }
+
     }
-
-    private static final Map<PieceType, Boolean> CONTINUOUS = Map.of(
-            PieceType.KING, false,
-            PieceType.KNIGHT, false,
-            PieceType.PAWN, false,
-            PieceType.QUEEN, true,
-            PieceType.ROOK, true,
-            PieceType.BISHOP, true
-    );
-
-    private static final Map<PieceType, int[][]> OFFSETS = Map.of(
-            PieceType.KING, new int[][]{{-1, 1}, {0, 1}, {1, 1}, {-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {1, -1}},
-            PieceType.KNIGHT, new int[][]{{-1, 2}, {1, 2}, {2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}},
-            PieceType.PAWN, new int[0][0],
-            PieceType.QUEEN, new int[][]{{-1, 1}, {0, 1}, {1, 1}, {-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {1, -1}},
-            PieceType.ROOK, new int[][]{{0, 1}, {-1, 0}, {1, 0}, {0, -1}},
-            PieceType.BISHOP, new int[][]{{-1, 1}, {1, 1}, {-1, -1}, {1, -1}}
-    );
 
 
     /**
@@ -113,8 +123,8 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
 
     private ArrayList<ChessMove> normalMoves(ChessBoard board, ChessPosition myPosition) {
         ArrayList<ChessMove> moves = new ArrayList<>();
-        boolean continuous = CONTINUOUS.get(type);
-        for (var direction : OFFSETS.get(type)) {
+        boolean continuous = type.continuous();
+        for (var direction : type.offsets()) {
             ChessPosition endPosition = myPosition.offset(direction);
             boolean previousWasOpen;
             do {
@@ -292,8 +302,7 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
 
     @Override
     public String toString() {
-        String typeString = String.valueOf(type);
-        return "" + String.valueOf(color).charAt(0) + typeString.charAt(0) + typeString.toLowerCase().charAt(1);
+        return color.abbreviation() + type.abbreviation();
     }
 
     @Override

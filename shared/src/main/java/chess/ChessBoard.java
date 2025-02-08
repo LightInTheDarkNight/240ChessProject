@@ -173,7 +173,7 @@ public class ChessBoard {
             s.append("|");
             for (int i = 0; i < 8; i++) {
                 ChessPiece piece = board[j][i];
-                s.append(piece == null ? "   |" : piece + "|");
+                s.append(piece == null ? "  |" : piece + "|");
             }
             if(j!= 0) {
                 s.append("\n");

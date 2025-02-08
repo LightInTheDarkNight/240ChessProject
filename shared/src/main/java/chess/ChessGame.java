@@ -1,7 +1,6 @@
 package chess;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -66,11 +65,13 @@ public class ChessGame {
     }
 
     private boolean moveCausesCheck(ChessMove move) {
-//Bug is with killing kings. sequence of calls and status of kings?
         ChessPosition start = move.getStartPosition();
         ChessPiece piece = board.getPiece(start);
-        if(piece != null && piece.getPieceType() == ChessPiece.PieceType.KING){
+        if(piece != null && (piece.getPieceType() == ChessPiece.PieceType.KING )){
             return kingMovedIntoCheck(move);
+        }
+        if (piece != null && isInCheck(piece.getTeamColor())) {
+            return moveDoesNotPreventCheck(move);
         }
         Collection<ChessPosition> pinningPieces = pinningPiecePositions(start);
         switch(pinningPieces.size()){
@@ -81,10 +82,42 @@ public class ChessGame {
                 // end -> attacker direction same
                 ChessPosition end = move.getEndPosition();
                 ChessPosition pinningPiece = pinningPieces.iterator().next();
-                return !end.equals(pinningPiece) && !Arrays.equals(start.direction(pinningPiece), end.direction(pinningPiece));
+                return !end.equals(pinningPiece)
+                        && !Arrays.equals(start.direction(pinningPiece), end.direction(pinningPiece));
             default: return true; // pinned twice; always causes check
         }
 
+    }
+
+    private boolean moveDoesNotPreventCheck(ChessMove move){
+        ChessPosition start = move.getStartPosition();
+        ChessPosition end = move.getEndPosition();
+        ChessPiece piece = board.getPiece(start);
+        if(piece == null){
+            throw new IllegalArgumentException();
+        }
+        ChessPosition kingPosition = board.getKingPosition(piece.getTeamColor());
+        if (kingPosition == null) {
+            throw new IllegalArgumentException();
+        }
+        HashSet<ChessPosition> kingAttackers = getAttackerPositions(attacksOnKing(piece.getTeamColor()));
+
+        boolean worthChecking = false;
+        int[] kingEndDirection = kingPosition.direction(end);
+        for(var attacker : kingAttackers){
+            if(Arrays.equals(kingEndDirection, kingPosition.direction(attacker))){
+                worthChecking = true;
+            }
+        }
+        if(!worthChecking){
+            return true;
+        }
+        ChessPiece captured = board.getPiece(end);
+        hardMove(move);
+        boolean out = isInCheck(piece.getTeamColor());
+        board.addPiece(start, piece);
+        board.addPiece(end, captured);
+        return out;
     }
 
     private boolean kingMovedIntoCheck(ChessMove move){
@@ -148,20 +181,24 @@ public class ChessGame {
         return !pinningPiecePositions(position).isEmpty();
     }
 
+    private static HashSet<ChessPosition> getAttackerPositions(Collection<ChessMove> attacks){
+        HashSet<ChessPosition> positions = new HashSet<>();
+        for(ChessMove attack : attacks){
+            positions.add(attack.getStartPosition());
+        }
+        return positions;
+    }
+
     private Collection<ChessPosition> pinningPiecePositions(ChessPosition position){
-        HashSet<ChessPosition> pinningPieces = new HashSet<>();
         ChessPiece piece = board.getPiece(position);
         if(piece == null || piece.getPieceType() == ChessPiece.PieceType.KING){
-            return pinningPieces;
+            return new HashSet<>();
         }
         TeamColor color = piece.getTeamColor();
         var attacksOnPosition = rawAttacks(position);
-        if(attacksOnPosition.isEmpty()) return pinningPieces;
+        if(attacksOnPosition.isEmpty()) return new HashSet<>();
 
-        HashSet<ChessPosition> attackers = new HashSet<>();
-        for(var attack : attacksOnPosition){
-            attackers.add(attack.getStartPosition());
-        }
+        HashSet<ChessPosition> attackers = getAttackerPositions(attacksOnPosition);
 
         board.removePiece(position);
         ArrayList<ChessMove> potentialKingAttacks = new ArrayList<>();
@@ -171,9 +208,8 @@ public class ChessGame {
         potentialKingAttacks.removeIf(move -> !board.getKingPosition(color).equals(move.getEndPosition())
         || isPinned(move.getStartPosition()));
 
-        for(var attack : potentialKingAttacks){
-            pinningPieces.add(attack.getStartPosition());
-        }
+        HashSet<ChessPosition> pinningPieces = getAttackerPositions(potentialKingAttacks);
+
         board.addPiece(position, piece);
         return pinningPieces;
     }
@@ -220,7 +256,7 @@ public class ChessGame {
         }
         System.out.println("Is " + teamColor + " in checkmate? \n" + board);
         boolean out = allValidMoves(teamColor).isEmpty();
-        System.out.println(teamColor + ": in check? " + out);
+        System.out.println(teamColor + ": in checkmate? " + out);
         return out;
     }
 
@@ -284,6 +320,9 @@ public class ChessGame {
                 case WHITE -> 8;
                 case BLACK -> 1;
             };
+        }
+        public String abbreviation(){
+            return this.toString().substring(0, 1);
         }
     }
 

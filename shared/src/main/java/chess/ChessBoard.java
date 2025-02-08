@@ -127,7 +127,7 @@ public class ChessBoard {
                 }
             }
         }
-        return null;
+        throw new RuntimeException("King Missing:\n" + this);
     }
 
     /**

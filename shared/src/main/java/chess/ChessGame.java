@@ -1,8 +1,7 @@
 package chess;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * For a class that can manage a chess game, making moves on a board
@@ -69,27 +68,37 @@ public class ChessGame {
     private boolean moveCausesCheck(ChessMove move) {
 //Bug is with killing kings. sequence of calls and status of kings?
         ChessPosition start = move.getStartPosition();
+        ChessPiece piece = board.getPiece(start);
+        if(piece != null && piece.getPieceType() == ChessPiece.PieceType.KING){
+            return kingMovedIntoCheck(move);
+        }
+        Collection<ChessPosition> pinningPieces = pinningPiecePositions(start);
+        switch(pinningPieces.size()){
+            case 0: return false;
+            case 1:
+                //when pinned: kill attacker, or stay in line
+                // end in  pinningPieces
+                // end -> attacker direction same
+                ChessPosition end = move.getEndPosition();
+                ChessPosition pinningPiece = pinningPieces.iterator().next();
+                return !end.equals(pinningPiece) && !Arrays.equals(start.direction(pinningPiece), end.direction(pinningPiece));
+            default: return true; // pinned twice; always causes check
+        }
+
+    }
+
+    private boolean kingMovedIntoCheck(ChessMove move){
+        ChessPosition start = move.getStartPosition();
         ChessPosition end = move.getEndPosition();
-
-        ChessPiece startPiece = board.getPiece(start);
-        if (startPiece == null) {
-            return true;
+        ChessPiece king = board.getPiece(start);
+        if(king == null || king.getPieceType() != ChessPiece.PieceType.KING){
+            throw new IllegalArgumentException();
         }
-        startPiece = startPiece.clone();
-        TeamColor team = startPiece.getTeamColor();
-
-        ChessPiece endPiece = board.getPiece(end);
-        if (endPiece != null) {
-            endPiece = endPiece.clone();
-        }
-
-//        System.out.println(team + ": Does " + move + " put me in check?");
-//        System.out.println(board);
+        ChessPiece captured = board.getPiece(end);
         hardMove(move);
-        boolean out = isInCheck(team);
-        board.addPiece(start, startPiece);
-        board.addPiece(end, endPiece);
-//        System.out.println(out + "\n");
+        boolean out = isInCheck(king.getTeamColor());
+        board.addPiece(start, king);
+        board.addPiece(end, captured);
         return out;
     }
 
@@ -129,29 +138,44 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        return !attacksOnKing(teamColor).isEmpty();
+        System.out.println("Is " + teamColor + " in check? \n" + board);
+        boolean out = !attacksOnKing(teamColor).isEmpty();
+        System.out.println(teamColor + ": in check? " + out);
+        return out;
     }
 
     private boolean isPinned(ChessPosition position){
+        return !pinningPiecePositions(position).isEmpty();
+    }
+
+    private Collection<ChessPosition> pinningPiecePositions(ChessPosition position){
+        HashSet<ChessPosition> pinningPieces = new HashSet<>();
         ChessPiece piece = board.getPiece(position);
-        if(piece == null){
-            return true;
+        if(piece == null || piece.getPieceType() == ChessPiece.PieceType.KING){
+            return pinningPieces;
         }
         TeamColor color = piece.getTeamColor();
-        if(rawAttacks(position).isEmpty()) return false;
+        var attacksOnPosition = rawAttacks(position);
+        if(attacksOnPosition.isEmpty()) return pinningPieces;
 
-        Collection<ChessMove> kingAttacks = attacksOnKing(color);
+        HashSet<ChessPosition> attackers = new HashSet<>();
+        for(var attack : attacksOnPosition){
+            attackers.add(attack.getStartPosition());
+        }
 
         board.removePiece(position);
-        Collection<ChessMove> newAttacks = attacksOnKing(color);
-        board.addPiece(position, piece);
-
-        for(var attack : newAttacks){
-            if(!kingAttacks.contains(attack)){
-                return true;
-            }
+        ArrayList<ChessMove> potentialKingAttacks = new ArrayList<>();
+        for(var attacker : attackers){
+            potentialKingAttacks.addAll(board.getPiece(attacker).pieceMoves(board, attacker));
         }
-        return false;
+        potentialKingAttacks.removeIf(move -> !board.getKingPosition(color).equals(move.getEndPosition())
+        || isPinned(move.getStartPosition()));
+
+        for(var attack : potentialKingAttacks){
+            pinningPieces.add(attack.getStartPosition());
+        }
+        board.addPiece(position, piece);
+        return pinningPieces;
     }
 
     private boolean isPinned(ChessMove move){
@@ -159,12 +183,16 @@ public class ChessGame {
     }
 
     private Collection<ChessMove> attacksOnKing(TeamColor teamColor){
-        ChessPosition kingPosition = board.getKingPosition(teamColor);
-        Collection<ChessMove> toConsider = rawAttacks(kingPosition);
+        Collection<ChessMove> toConsider = rawAttacks(board.getKingPosition(teamColor));
         toConsider.removeIf(this::isPinned);
         return toConsider;
     }
 
+    /**
+     * Calculates all moves the opponent could make that end on the given position.
+     * @returns the moves of the opposite team of the one occupying the passed position that end on that position, not
+     * filtered for validity.
+     * */
     private Collection<ChessMove> rawAttacks(ChessPosition position){
         ArrayList<ChessMove> attacks = new ArrayList<>();
         if(position == null){
@@ -175,7 +203,7 @@ public class ChessGame {
             return attacks;
         }
         attacks = board.getTeamMoves(piece.getTeamColor().other());
-        attacks.removeIf(move -> !position.equals(move.getEndPosition()));
+        attacks.removeIf( move -> !position.equals(move.getEndPosition()));
         return attacks;
     }
 
@@ -186,10 +214,14 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
+
         if (!isInCheck(teamColor)) {
             return false;
         }
-        return allValidMoves(teamColor).isEmpty();
+        System.out.println("Is " + teamColor + " in checkmate? \n" + board);
+        boolean out = allValidMoves(teamColor).isEmpty();
+        System.out.println(teamColor + ": in check? " + out);
+        return out;
     }
 
     /**

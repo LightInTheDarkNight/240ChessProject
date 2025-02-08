@@ -56,6 +56,19 @@ public class ChessPosition implements Comparable<ChessPosition> {
         return new int[]{this.row - other.row, this.col - other.col};
     }
 
+    public int[] direction(ChessPosition other){
+        int[] offset = difference(other);
+        int divisor = gcd(Math.abs(offset[0]), Math.abs(offset[1]));
+        offset[0] /= divisor;
+        offset[1] /= divisor;
+        return offset;
+    }
+
+    private static int gcd(int a, int b){
+        if (b==0) return a;
+        return gcd(b, a%b);
+    }
+
     @Override
     public int compareTo(ChessPosition other) {
         return (this.row - other.row) * 2 + this.col - other.col;

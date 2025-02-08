@@ -214,10 +214,14 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
+        //debugging print statements version
+        /*
         System.out.println("Is " + teamColor + " in check? \n" + board);
         boolean out = !attacksOnKing(teamColor).isEmpty();
         System.out.println(teamColor + ": in check? " + out);
         return out;
+        */
+        return !attacksOnKing(teamColor).isEmpty();
     }
 
     private boolean isPinned(ChessPosition position){
@@ -298,10 +302,14 @@ public class ChessGame {
         if (!isInCheck(teamColor)) {
             return false;
         }
+        return allValidMoves(teamColor).isEmpty();
+        // debugging print statements
+        /*
         System.out.println("Is " + teamColor + " in checkmate? \n" + board);
         boolean out = allValidMoves(teamColor).isEmpty();
         System.out.println(teamColor + ": in checkmate? " + out);
         return out;
+        */
     }
 
     /**

@@ -119,16 +119,29 @@ public class ChessGame {
     }
 
     private boolean kingMovedIntoCheck(ChessMove move){
-        ChessPosition start = move.getStartPosition();
+        ChessPosition kingPosition = move.getStartPosition();
         ChessPosition end = move.getEndPosition();
-        ChessPiece king = board.getPiece(start);
+        ChessPiece king = board.getPiece(kingPosition);
         if(king == null || king.getPieceType() != ChessPiece.PieceType.KING){
             throw new IllegalArgumentException();
         }
+
+        if(isCastle(move)){
+            // when the king piece generates the move, it checks that the other piece is a rook, that they are both the
+            // same color, that neither has moved, and that the middle squares are empty. Only Check validation remains.
+            // Final position not in check, or it wouldn't have made it to this call.
+            // finish validation
+            int[] direction = move.direction();
+            ChessMove middleMove = move.getStartPosition().getMoveTo(direction);
+            boolean inCheck = isInCheck(king.getTeamColor()); // not out of check
+            boolean middleNotValid = kingMovedIntoCheck(middleMove); // not through check
+            return inCheck||middleNotValid;
+        }
+
         ChessPiece captured = board.getPiece(end);
         hardMove(move);
         boolean out = isInCheck(king.getTeamColor());
-        board.addPiece(start, king);
+        board.addPiece(kingPosition, king);
         board.addPiece(end, captured);
         return out;
     }
@@ -157,10 +170,41 @@ public class ChessGame {
         if (moveOptions == null || !moveOptions.contains(move) || currentTurn != piece.getTeamColor()) {
             throw new InvalidMoveException("Invalid move: " + move);
         }
-
+        if(isCastle(move)){
+            castle(move);
+        }
         hardMove(move);
-        currentTurn = currentTurn.other();
         piece.setHasMoved(true);
+        currentTurn = currentTurn.other();
+    }
+
+
+
+    private void castle(ChessMove castle){
+
+        int homeRow = castle.getStartPosition().getRow();
+        int[] direction = castle.direction();
+
+        // extract rook move
+        ChessPosition rookDestination = castle.getStartPosition().offset(direction);
+        ChessPosition rookStart = new ChessPosition(homeRow, direction[1] == -1? 1 : 8);
+        ChessPiece rook = board.getPiece(rookStart);
+        ChessMove rookMove = rookStart.getMoveTo(rookDestination);
+
+        //perform rook move
+        hardMove(rookMove);
+        rook.setHasMoved(true);
+
+        // king move will be taken care of by calling method.
+    }
+
+    private boolean isCastle(ChessMove castle){
+        ChessPiece king = board.getPiece(castle.getStartPosition());
+        if(king == null) return false;
+        int[] queenSide = new int[] {0, -2};
+        int[] kingSide = new int[] {0, 2};
+        return king.getPieceType()== ChessPiece.PieceType.KING &&
+                (Arrays.equals(castle.distance(), queenSide) || Arrays.equals(castle.distance(), kingSide));
     }
 
     /**

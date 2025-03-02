@@ -1,4 +1,5 @@
 package model;
 
-public record AuthData(String authToken, String username) {
-}
+import java.util.Objects;
+
+public record AuthData(String authToken, String username) {}

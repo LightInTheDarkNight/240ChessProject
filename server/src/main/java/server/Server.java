@@ -32,6 +32,8 @@ public class Server {
         //This line initializes the server and can be removed once you have a functioning endpoint
         Spark.exception(WebException.class, this::errorHandler);
         Spark.exception(Exception.class, this::errorHandler);
+
+
         Spark.delete("/db", (req, res) -> {
             if(clearService.clearAll()){
                 res.type(JSON);
@@ -42,31 +44,35 @@ public class Server {
             }
             return EMPTY;
         } );
+
+
         Spark.post("/user", (req, res) -> {
             UserData toCreate = serializer.fromJson(req.body(), UserData.class);
             AuthData auth = userService.register(toCreate);
-            res.type(JSON);
-            res.status(200);
-            return serializer.toJson(auth);
+            return successHandler(res, serializer.toJson(auth));
         });
+
         Spark.post("/session", (req, res) -> {
             UserData user = serializer.fromJson(req.body(), UserData.class);
             AuthData auth = userService.login(user);
-            res.type(JSON);
-            res.status(200);
-            return serializer.toJson(auth);
+            return successHandler(res, serializer.toJson(auth));
         });
+
         Spark.delete("/session", (req, res) -> {
             String authToken = req.headers("Authorization");
             boolean success = userService.logout(authToken);
             if(success){
-                res.type(JSON);
-                res.status(200);
-                return EMPTY;
+                return successHandler(res, EMPTY);
             }
             throw new RuntimeException("Error: failed to delete authentication");
         });
 
+
+        Spark.post("/game", (req, res) ->{
+            userService.authenticate(req.headers("Authorization"));
+            var out = gameService.createGame(serializer.fromJson(req.body(), GameService.CreateGameRequest.class));
+            return successHandler(res, serializer.toJson(out));
+        });
 
         Spark.awaitInitialization();
         return Spark.port();
@@ -77,6 +83,12 @@ public class Server {
     public void stop() {
         Spark.stop();
         Spark.awaitStop();
+    }
+
+    private static String successHandler(Response res, String out){
+        res.type(JSON);
+        res.status(200);
+        return out;
     }
 
     private void errorHandler(WebException e, Request req, Response res){

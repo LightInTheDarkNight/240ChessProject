@@ -9,6 +9,11 @@ public interface GameDAO {
     public Collection<GameData> getGameList();
     public GameData getGameByID(int gameID);
     public boolean deleteGameByID(int gameID);
+    public default boolean updateGame(GameData newGame){
+        deleteGameByID(newGame.gameID());
+        addGame(newGame);
+        return getGameByID(newGame.gameID()) == newGame;
+    }
     public default boolean deleteGame(GameData gameData){
         return deleteGameByID(gameData.gameID());
     }

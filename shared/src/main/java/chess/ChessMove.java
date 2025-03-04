@@ -72,11 +72,11 @@ public class ChessMove implements Comparable<ChessMove> {
                 && promotionPiece == chessMove.promotionPiece;
     }
 
-    public int[] distance(){
+    public int[] distance() {
         return startPosition.difference(endPosition);
     }
 
-    public int[] direction(){
+    public int[] direction() {
         return startPosition.direction(endPosition);
     }
 

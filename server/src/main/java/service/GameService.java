@@ -12,23 +12,27 @@ public class GameService {
     private final GameDAO games;
     private static int nextGameID = 0;
 
-    public GameService(GameDAO games){
+    public GameService(GameDAO games) {
         this.games = games;
     }
 
-    public CreateGameResponse createGame(CreateGameRequest game){
+    public CreateGameResponse createGame(CreateGameRequest game) {
         games.addGame(new GameData(nextGameID, null, null, game.gameName, new ChessGame()));
         return new CreateGameResponse(nextGameID++);
     }
-    public record CreateGameRequest(String gameName){}
-    public record CreateGameResponse(int gameID){}
 
-    public GameData getGame(int id){
+    public record CreateGameRequest(String gameName) {
+    }
+
+    public record CreateGameResponse(int gameID) {
+    }
+
+    public GameData getGame(int id) {
         return games.getGameByID(id);
     }
 
     public boolean joinGame(String username, JoinGameRequest req) throws AlreadyTakenException {
-        if(username == null || req.playerColor == null){
+        if (username == null || req.playerColor == null) {
             throw new RuntimeException("username or color were null");
         }
 
@@ -39,20 +43,20 @@ public class GameService {
 
         GameData out;
 
-        if(req.playerColor() == TeamColor.WHITE && original.whiteUsername() == null){
+        if (req.playerColor() == TeamColor.WHITE && original.whiteUsername() == null) {
             out = original.setWhitePlayer(username);
-        }
-        else if (req.playerColor() == TeamColor.BLACK && original.blackUsername() == null) {
+        } else if (req.playerColor() == TeamColor.BLACK && original.blackUsername() == null) {
             out = original.setBlackPlayer(username);
-        }
-        else {
+        } else {
             throw new AlreadyTakenException();
         }
         return games.updateGame(out);
     }
-    public record JoinGameRequest(TeamColor playerColor, int gameID){}
 
-    public Collection<GameData> listGames(){
+    public record JoinGameRequest(TeamColor playerColor, int gameID) {
+    }
+
+    public Collection<GameData> listGames() {
         return games.getGameList();
     }
 }

@@ -56,10 +56,10 @@ public class ChessPosition implements Comparable<ChessPosition> {
         return new int[]{other.row - this.row, other.col - this.col};
     }
 
-    public int[] direction(ChessPosition other){
+    public int[] direction(ChessPosition other) {
         int[] offset = difference(other);
-        if(offset[0] == 0){
-            if(offset[1] != 0){
+        if (offset[0] == 0) {
+            if (offset[1] != 0) {
                 offset[1] /= Math.abs(offset[1]);
                 return offset;
             }
@@ -76,17 +76,19 @@ public class ChessPosition implements Comparable<ChessPosition> {
         return offset;
     }
 
-    public ChessMove getMoveTo(int[] offsets){
+    public ChessMove getMoveTo(int[] offsets) {
         return new ChessMove(this, this.offset(offsets));
     }
 
-    public ChessMove getMoveTo(ChessPosition end){
+    public ChessMove getMoveTo(ChessPosition end) {
         return new ChessMove(this, end);
     }
 
-    private static int gcd(int a, int b){
-        if (b==0) return a;
-        return gcd(b, a%b);
+    private static int gcd(int a, int b) {
+        if (b == 0) {
+            return a;
+        }
+        return gcd(b, a % b);
     }
 
     @Override

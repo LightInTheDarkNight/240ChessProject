@@ -35,7 +35,7 @@ public class ChessBoard {
     }
 
     public static boolean notOnBoard(ChessPosition pos) {
-        if(pos == null){
+        if (pos == null) {
             return true;
         }
         int row = pos.getRow();
@@ -90,7 +90,7 @@ public class ChessBoard {
      * Returns potential moves of all the pieces of the passed color. Returns all moves if passed null.
      */
     public ArrayList<ChessMove> getTeamMoves(ChessGame.TeamColor team) {
-        ChessGame.TeamColor filter = team == null? null : team.other();
+        ChessGame.TeamColor filter = team == null ? null : team.other();
         ArrayList<ChessMove> moves = new ArrayList<>();
         for (int row = 0; row < 8; row++) {
             for (int column = 0; column < 8; column++) {
@@ -175,7 +175,7 @@ public class ChessBoard {
                 ChessPiece piece = board[j][i];
                 s.append(piece == null ? "  |" : piece + "|");
             }
-            if(j!= 0) {
+            if (j != 0) {
                 s.append("\n");
             }
         }

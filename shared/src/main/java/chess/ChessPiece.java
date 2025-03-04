@@ -44,8 +44,8 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
                 PieceType.BISHOP, new int[][]{{-1, 1}, {1, 1}, {-1, -1}, {1, -1}}
         );
 
-        public String abbreviation(){
-            return switch(this){
+        public String abbreviation() {
+            return switch (this) {
                 case KING -> "K";
                 case QUEEN -> "Q";
                 case BISHOP -> "B";
@@ -54,8 +54,9 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
                 case PAWN -> "P";
             };
         }
-        public boolean continuous(){
-            return switch(this){
+
+        public boolean continuous() {
+            return switch (this) {
                 case KING -> false;
                 case QUEEN -> true;
                 case BISHOP -> true;
@@ -64,7 +65,8 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
                 case PAWN -> false;
             };
         }
-        public int[][] offsets(){
+
+        public int[][] offsets() {
             return OFFSETS.get(this);
         }
 

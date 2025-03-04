@@ -2,12 +2,19 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.*;
-import model.*;
-import service.*;
-import spark.*;
-import static service.GameService.*;
+import model.AuthData;
+import model.UserData;
+import service.ClearService;
+import service.GameService;
+import service.UserService;
+import spark.Request;
+import spark.Response;
+import spark.Spark;
 
 import java.util.Map;
+
+import static service.GameService.CreateGameRequest;
+import static service.GameService.JoinGameRequest;
 
 public class Server {
     private static final UserDAO userDAO = new MemoryUserDAO();
@@ -52,8 +59,11 @@ public class Server {
     }
 
 
-    private static Object registerHandler(Request req, Response res) throws AlreadyTakenException {
+    private static Object registerHandler(Request req, Response res) throws WebException {
         UserData toCreate = serializer.fromJson(req.body(), UserData.class);
+        if (toCreate.username() == null || toCreate.password() == null || toCreate.email() == null) {
+            throw new BadRequestException();
+        }
         AuthData auth = userService.register(toCreate);
         return successHandler(res, serializer.toJson(auth));
     }
@@ -67,7 +77,7 @@ public class Server {
     private static Object logoutHandler(Request req, Response res) throws UnauthorizedRequestException {
         String authToken = req.headers(AUTH);
         boolean success = userService.logout(authToken);
-        if(success){
+        if (success) {
             return successHandler(res, EMPTY);
         }
         throw new RuntimeException("Error: failed to delete authentication from database");
@@ -86,11 +96,11 @@ public class Server {
         boolean success;
         try {
             success = gameService.joinGame(username, joinReq);
-            if(success){
+            if (success) {
                 return successHandler(res, EMPTY);
             }
             throw new WebException("Error: failed to join valid game with valid username and open slot");
-        } catch (RuntimeException e){
+        } catch (RuntimeException e) {
             throw new BadRequestException();
         }
     }
@@ -101,71 +111,75 @@ public class Server {
     }
 
 
-    private static Object clearHandler(Request req, Response res){
-        if(clearService.clearAll()){
+    private static Object clearHandler(Request req, Response res) {
+        if (clearService.clearAll()) {
             res.type(JSON);
             res.status(200);
-        }
-        else{
+        } else {
             throw new RuntimeException("Error: database clear failed");
         }
         return EMPTY;
     }
 
 
-    private static String successHandler(Response res, String out){
+    private static String successHandler(Response res, String out) {
         res.type(JSON);
         res.status(200);
         return out;
     }
 
-    private void errorHandler(WebException e, Request req, Response res){
+    private void errorHandler(WebException e, Request req, Response res) {
         var body = serializer.toJson(Map.of("message", e.getMessage()));
         res.type(JSON);
         res.status(e.getStatusCode());
         res.body(body);
     }
 
-    private void errorHandler(Exception e, Request req, Response res){
+    private void errorHandler(Exception e, Request req, Response res) {
         errorHandler(new WebException(e), req, res);
     }
 
 
-    public static class WebException extends Exception{
-        public int getStatusCode(){
+    public static class WebException extends Exception {
+        public int getStatusCode() {
             return 500;
         }
-        WebException(String message){
+
+        WebException(String message) {
             super(message);
         }
-        public WebException(Exception e){
+
+        public WebException(Exception e) {
             super(e.getMessage());
         }
     }
 
     public static class UnauthorizedRequestException extends WebException {
-        public int getStatusCode(){
+        public int getStatusCode() {
             return 401;
         }
-        public UnauthorizedRequestException(){
+
+        public UnauthorizedRequestException() {
             super("Error: unauthorized");
         }
     }
 
     public static class AlreadyTakenException extends WebException {
-        public int getStatusCode(){
+        public int getStatusCode() {
             return 403;
         }
-        public AlreadyTakenException(){
+
+        public AlreadyTakenException() {
             super("Error: already taken");
         }
     }
 
     private static class BadRequestException extends WebException {
-        public int getStatusCode(){
+        public int getStatusCode() {
             return 400;
         }
-        public BadRequestException(){
+
+        public BadRequestException() {
             super("Error: bad request");
         }
     }

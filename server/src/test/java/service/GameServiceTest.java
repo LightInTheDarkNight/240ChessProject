@@ -12,21 +12,22 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.random.RandomGenerator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GameServiceTest {
     private static final GameDAO gameList = new MemoryGameDAO();
     private static GameService service = new GameService(gameList);
-    private static String[] aFewNames = {"jackhammer", "johnathan", "coffee cup", "Jackson 5", "SQL sucks"};
+    private static final String[] aFewNames = {"jackhammer", "johnathan", "coffee cup", "Jackson 5", "SQL sucks"};
+
     @BeforeEach
-    void setup(){
+    void setup() {
         assert gameList.clear();
         service = new GameService(gameList);
     }
 
-    private static HashSet<Integer> populateGames(String[] names){
+    private static HashSet<Integer> populateGames(String[] names) {
         HashSet<Integer> idResults = new HashSet<>();
-        for(var name : names){
+        for (var name : names) {
             GameService.CreateGameResponse response = service.createGame(new GameService.CreateGameRequest(name));
             boolean success = idResults.add(response.gameID());
             assert success;
@@ -50,9 +51,9 @@ class GameServiceTest {
     }
 
     @Test
-    void getGameTest(){
+    void getGameTest() {
         HashSet<Integer> gameIDs = populateGames(aFewNames);
-        for(int id : gameIDs){
+        for (int id : gameIDs) {
             assert service.getGame(id) != null;
         }
         int invalidID = RandomGenerator.getDefault().nextInt() + aFewNames.length;
@@ -60,12 +61,12 @@ class GameServiceTest {
     }
 
     @Test
-    void joinGameTest(){
+    void joinGameTest() {
         int id = service.createGame(new GameService.CreateGameRequest("test")).gameID();
         try {
             service.joinGame("JohnCena", new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id));
             service.joinGame("Johan", new GameService.JoinGameRequest(ChessGame.TeamColor.WHITE, id));
-        }catch (Server.AlreadyTakenException e){
+        } catch (Server.AlreadyTakenException e) {
             throw new RuntimeException("Something got really screwed up");
         }
         GameData game = service.getGame(id);

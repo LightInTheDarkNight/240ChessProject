@@ -2,6 +2,8 @@ package server;
 
 import com.google.gson.Gson;
 import dataaccess.*;
+import model.AuthData;
+import model.UserData;
 import service.ClearService;
 import service.GameService;
 import service.UserService;
@@ -16,6 +18,9 @@ public class Server {
     private static final ClearService clearService = new ClearService(userDAO, gameDAO, authDAO);
     private static final UserService userService = new UserService(userDAO, authDAO);
     private static final GameService gameService = new GameService(gameDAO);
+    private static final Gson serializer = new Gson();
+    private static final String JSON = "application/json";
+    private static final String EMPTY = "{}";
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -29,14 +34,39 @@ public class Server {
         Spark.exception(Exception.class, this::errorHandler);
         Spark.delete("/db", (req, res) -> {
             if(clearService.clearAll()){
-                res.type("application/json");
+                res.type(JSON);
                 res.status(200);
             }
             else{
                 throw new RuntimeException("Error: database clear failed");
             }
-            return "{}";
+            return EMPTY;
         } );
+        Spark.post("/user", (req, res) -> {
+            UserData toCreate = serializer.fromJson(req.body(), UserData.class);
+            AuthData auth = userService.register(toCreate);
+            res.type(JSON);
+            res.status(200);
+            return serializer.toJson(auth);
+        });
+        Spark.post("/session", (req, res) -> {
+            UserData user = serializer.fromJson(req.body(), UserData.class);
+            AuthData auth = userService.login(user);
+            res.type(JSON);
+            res.status(200);
+            return serializer.toJson(auth);
+        });
+        Spark.delete("/session", (req, res) -> {
+            String authToken = req.attribute("authorization");
+            boolean success = userService.logout(authToken);
+            if(success){
+                res.type(JSON);
+                res.status(200);
+                return EMPTY;
+            }
+            throw new RuntimeException("Error: failed to delete authentication");
+        });
+
 
         Spark.awaitInitialization();
         return Spark.port();
@@ -50,14 +80,14 @@ public class Server {
     }
 
     private void errorHandler(WebException e, Request req, Response res){
-        var body = new Gson().toJson(Map.of("message", e.getMessage()));
-        res.type("application/json");
+        var body = serializer.toJson(Map.of("message", e.getMessage()));
+        res.type(JSON);
         res.status(e.getStatusCode());
         res.body(body);
     }
 
     private void errorHandler(Exception e, Request req, Response res){
-        errorHandler(new WebException(e), req, res);
+        errorHandler(new WebException(e.getMessage()), req, res);
     }
 
     public static class WebException extends Exception{

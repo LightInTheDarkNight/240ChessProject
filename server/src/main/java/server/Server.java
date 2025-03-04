@@ -57,7 +57,7 @@ public class Server {
             return serializer.toJson(auth);
         });
         Spark.delete("/session", (req, res) -> {
-            String authToken = req.attribute("authorization");
+            String authToken = req.headers("Authorization");
             boolean success = userService.logout(authToken);
             if(success){
                 res.type(JSON);

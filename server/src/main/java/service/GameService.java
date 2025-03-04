@@ -27,8 +27,8 @@ public class GameService {
     }
 
     public boolean joinGame(String username, JoinGameRequest req) throws Server.AlreadyTakenException {
-        if(username == null){
-            throw new RuntimeException("username was null");
+        if(username == null || req.playerColor == null){
+            throw new RuntimeException("username or color were null");
         }
 
         GameData original = getGame(req.gameID);

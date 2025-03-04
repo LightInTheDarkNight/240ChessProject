@@ -90,7 +90,7 @@ public class Server {
             }
         });
 
-        Spark.put("/game", (req, res)->{
+        Spark.get("/game", (req, res)->{
             userService.authenticate(req.headers(AUTH));
             return successHandler(res, serializer.toJson(gameService.listGames()));
         });

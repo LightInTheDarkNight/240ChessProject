@@ -21,6 +21,7 @@ public class Server {
     private static final Gson serializer = new Gson();
     private static final String JSON = "application/json";
     private static final String EMPTY = "{}";
+    private static final String AUTH = "Authorization";
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
@@ -59,19 +60,39 @@ public class Server {
         });
 
         Spark.delete("/session", (req, res) -> {
-            String authToken = req.headers("Authorization");
+            String authToken = req.headers(AUTH);
             boolean success = userService.logout(authToken);
             if(success){
                 return successHandler(res, EMPTY);
             }
-            throw new RuntimeException("Error: failed to delete authentication");
+            throw new RuntimeException("Error: failed to delete authentication from database");
         });
 
 
         Spark.post("/game", (req, res) ->{
-            userService.authenticate(req.headers("Authorization"));
+            userService.authenticate(req.headers(AUTH));
             var out = gameService.createGame(serializer.fromJson(req.body(), GameService.CreateGameRequest.class));
             return successHandler(res, serializer.toJson(out));
+        });
+
+        Spark.put("/game", (req, res) -> {
+            String username = userService.getUsername(req.headers(AUTH));
+            GameService.JoinGameRequest joinReq = serializer.fromJson(req.body(), GameService.JoinGameRequest.class);
+            boolean success;
+            try {
+                success = gameService.joinGame(username, joinReq);
+                if(success){
+                    return successHandler(res, EMPTY);
+                }
+                throw new WebException("Error: failed to join valid game with valid username and open slot");
+            } catch (RuntimeException e){
+                throw new BadRequestException();
+            }
+        });
+
+        Spark.put("/game", (req, res)->{
+            userService.authenticate(req.headers(AUTH));
+            return successHandler(res, serializer.toJson(gameService.listGames()));
         });
 
         Spark.awaitInitialization();
@@ -99,18 +120,18 @@ public class Server {
     }
 
     private void errorHandler(Exception e, Request req, Response res){
-        errorHandler(new WebException(e.getMessage()), req, res);
+        errorHandler(new WebException(e), req, res);
     }
 
     public static class WebException extends Exception{
         public int getStatusCode(){
             return 500;
-        };
+        }
         WebException(String message){
             super(message);
         }
         public WebException(Exception e){
-            super(e);
+            super(e.getMessage());
         }
     }
 
@@ -132,7 +153,7 @@ public class Server {
         }
     }
 
-    private class BadRequestException extends WebException {
+    private static class BadRequestException extends WebException {
         public int getStatusCode(){
             return 400;
         }

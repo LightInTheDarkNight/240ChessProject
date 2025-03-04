@@ -1,9 +1,10 @@
 package service;
 
 import chess.ChessGame;
+import chess.ChessGame.TeamColor;
 import dataaccess.GameDAO;
 import model.GameData;
-import server.Server;
+import server.Server.AlreadyTakenException;
 
 import java.util.Collection;
 
@@ -26,7 +27,7 @@ public class GameService {
         return games.getGameByID(id);
     }
 
-    public boolean joinGame(String username, JoinGameRequest req) throws Server.AlreadyTakenException {
+    public boolean joinGame(String username, JoinGameRequest req) throws AlreadyTakenException {
         if(username == null || req.playerColor == null){
             throw new RuntimeException("username or color were null");
         }
@@ -37,19 +38,19 @@ public class GameService {
         }
 
         GameData out;
-        String whitePlayer = original.whiteUsername();
-        String blackPlayer = original.blackUsername();
 
-        if(req.playerColor() == ChessGame.TeamColor.WHITE && whitePlayer == null){
+        if(req.playerColor() == TeamColor.WHITE && original.whiteUsername() == null){
             out = original.setWhitePlayer(username);
-        } else if (req.playerColor() == ChessGame.TeamColor.BLACK && blackPlayer == null) {
+        }
+        else if (req.playerColor() == TeamColor.BLACK && original.blackUsername() == null) {
             out = original.setBlackPlayer(username);
-        } else {
-            throw new Server.AlreadyTakenException();
+        }
+        else {
+            throw new AlreadyTakenException();
         }
         return games.updateGame(out);
     }
-    public record JoinGameRequest(ChessGame.TeamColor playerColor, int gameID){}
+    public record JoinGameRequest(TeamColor playerColor, int gameID){}
 
     public Collection<GameData> listGames(){
         return games.getGameList();

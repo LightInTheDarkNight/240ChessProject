@@ -14,8 +14,8 @@ public class MemoryUserDAO implements UserDAO{
     }
 
     @Override
-    public void addUser(UserData user) {
-        userDataList.put(user.username(), user);
+    public boolean addUser(UserData user) {
+        return userDataList.putIfAbsent(user.username(), user) == null;
     }
 
     @Override

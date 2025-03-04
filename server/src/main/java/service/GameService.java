@@ -10,7 +10,7 @@ import java.util.Collection;
 
 public class GameService {
     private final GameDAO games;
-    private static int nextGameID = 0;
+    private static int nextGameID = 1;
 
     public GameService(GameDAO games) {
         this.games = games;

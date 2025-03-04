@@ -38,16 +38,21 @@ class GameServiceTest {
 
     @Test
     void createGameTest() {
-        HashSet<Integer> results = populateGames(A_FEW_NAMES);
-        assert A_FEW_NAMES.length == results.size();
+        boolean success = service.createGame(new GameService.CreateGameRequest(A_FEW_NAMES[0])) != null;
+        assert success;
     }
 
     @Test
-    void listGameTest() {
+    void listGamesTest() {
         HashSet<Integer> gameIDs = populateGames(A_FEW_NAMES);
         Collection<GameData> games = service.listGames();
         assert gameIDs.size() == A_FEW_NAMES.length;
         assert games.size() == gameIDs.size();
+    }
+
+    @Test
+    void emptyListGamesTest() {
+        assert service.listGames().isEmpty();
     }
 
     @Test
@@ -56,7 +61,11 @@ class GameServiceTest {
         for (int id : gameIDs) {
             assert service.getGame(id) != null;
         }
-        int invalidID = RandomGenerator.getDefault().nextInt() + A_FEW_NAMES.length;
+    }
+
+    @Test
+    void invalidGetGameTest(){
+        int invalidID = RandomGenerator.getDefault().nextInt();
         assert service.getGame(invalidID) == null;
     }
 
@@ -72,6 +81,19 @@ class GameServiceTest {
         GameData game = service.getGame(id);
         assert game.blackUsername().equals("JohnCena");
         assert game.whiteUsername().equals("Johan");
+    }
+
+    @Test
+    void negativeJoinGameTest(){
+        assertThrows(RuntimeException.class, () ->
+                service.joinGame("JohnCena", new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, 5)));
+        int id = service.createGame(new GameService.CreateGameRequest("test")).gameID();
+        try {
+            service.joinGame("JohnCena", new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id));
+            service.joinGame("Johan", new GameService.JoinGameRequest(ChessGame.TeamColor.WHITE, id));
+        } catch (Server.AlreadyTakenException e) {
+            throw new RuntimeException("Something got really screwed up");
+        }
         assertThrows(Server.AlreadyTakenException.class, () ->
                 service.joinGame("JohnCena", new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id)));
         assertThrows(Server.AlreadyTakenException.class, () ->

@@ -16,8 +16,9 @@ public interface GameDAO {
      * Adds the given game to the attached database.
      *
      * @param game the game to add to the attached database.
+     * @return true if that gameID wasn't already in the list and it was added successfully; false otherwise.
      */
-    void addGame(GameData game);
+    boolean addGame(GameData game);
 
     /**
      * Retrieves a list of all games currently stored in the attached database.
@@ -49,8 +50,8 @@ public interface GameDAO {
      * @return true if retrieving the game at newGame's ID yields a GameData object equal to newGame.
      */
     default boolean updateGame(GameData newGame) {
-        deleteGameByID(newGame.gameID());
-        addGame(newGame);
-        return getGameByID(newGame.gameID()).equals(newGame);
+        boolean success = deleteGameByID(newGame.gameID());
+        success = success && addGame(newGame);
+        return success && getGameByID(newGame.gameID()).equals(newGame);
     }
 }

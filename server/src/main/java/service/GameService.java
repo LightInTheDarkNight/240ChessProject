@@ -17,8 +17,13 @@ public class GameService {
     }
 
     public CreateGameResponse createGame(CreateGameRequest game) {
-        games.addGame(new GameData(nextGameID, null, null, game.gameName, new ChessGame()));
-        return new CreateGameResponse(nextGameID++);
+        boolean success = games.addGame(new GameData(nextGameID, null, null, game.gameName, new ChessGame()));
+        if (success) {
+            return new CreateGameResponse(nextGameID++);
+        }
+        else {
+            return null;
+        }
     }
 
     public record CreateGameRequest(String gameName) {

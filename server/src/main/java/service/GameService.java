@@ -11,6 +11,6 @@ public class GameService {
     }
 
     public int createGame(GameData game){
-
+        return 0;
     }
 }

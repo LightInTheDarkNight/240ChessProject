@@ -19,7 +19,7 @@ public class MemoryUserDAO implements UserDAO {
     }
 
     @Override
-    public UserData findUserData(String username) {
+    public UserData getUserByUsername(String username) {
         return userDataList.get(username);
     }
 }

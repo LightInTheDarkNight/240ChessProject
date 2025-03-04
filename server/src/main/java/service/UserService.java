@@ -32,7 +32,7 @@ public class UserService {
     }
 
     public AuthData login(UserData user) throws UnauthorizedRequestException {
-        var correct = users.findUserData(user);
+        var correct = users.getUserByUsername(user);
         if (correct == null || !Objects.equals(correct.password(), user.password())) {
             throw new UnauthorizedRequestException();
         }

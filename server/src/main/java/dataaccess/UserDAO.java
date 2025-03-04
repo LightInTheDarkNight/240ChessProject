@@ -24,7 +24,7 @@ public interface UserDAO {
      * @param username the username of the UserData object to find and retrieve
      * @return the UserData object retrieved, or null if it doesn't exist.
      */
-    UserData findUserData(String username);
+    UserData getUserByUsername(String username);
 
     /**
      * Finds the UserData object in the database associated with the passed in object's username field.
@@ -32,7 +32,7 @@ public interface UserDAO {
      * @param user the user whose username should be used to find the corresponding UserData object
      * @return the UserData object retrieved, or null if it doesn't exist.
      */
-    default UserData findUserData(UserData user) {
-        return user == null ? null : findUserData(user.username());
+    default UserData getUserByUsername(UserData user) {
+        return user == null ? null : getUserByUsername(user.username());
     }
 }

@@ -53,14 +53,4 @@ public interface GameDAO {
         addGame(newGame);
         return getGameByID(newGame.gameID()).equals(newGame);
     }
-
-    /**
-     * Extracts the gameID from the passed in GameData object, and calls deleteGameByID with it.
-     *
-     * @param gameData the GameData to extract the id from.
-     * @return true if delete was successful; false otherwise.
-     */
-    default boolean deleteGame(GameData gameData) {
-        return deleteGameByID(gameData.gameID());
-    }
 }

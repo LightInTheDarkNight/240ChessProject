@@ -15,14 +15,14 @@ import java.util.random.RandomGenerator;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class GameServiceTest {
-    private static final GameDAO gameList = new MemoryGameDAO();
-    private static GameService service = new GameService(gameList);
-    private static final String[] aFewNames = {"jackhammer", "johnathan", "coffee cup", "Jackson 5", "SQL sucks"};
+    private static final GameDAO GAME_LIST = new MemoryGameDAO();
+    private static GameService service = new GameService(GAME_LIST);
+    private static final String[] A_FEW_NAMES = {"jackhammer", "johnathan", "coffee cup", "Jackson 5", "SQL sucks"};
 
     @BeforeEach
     void setup() {
-        assert gameList.clear();
-        service = new GameService(gameList);
+        assert GAME_LIST.clear();
+        service = new GameService(GAME_LIST);
     }
 
     private static HashSet<Integer> populateGames(String[] names) {
@@ -38,25 +38,25 @@ class GameServiceTest {
 
     @Test
     void createGameTest() {
-        HashSet<Integer> results = populateGames(aFewNames);
-        assert aFewNames.length == results.size();
+        HashSet<Integer> results = populateGames(A_FEW_NAMES);
+        assert A_FEW_NAMES.length == results.size();
     }
 
     @Test
     void listGameTest() {
-        HashSet<Integer> gameIDs = populateGames(aFewNames);
+        HashSet<Integer> gameIDs = populateGames(A_FEW_NAMES);
         Collection<GameData> games = service.listGames();
-        assert gameIDs.size() == aFewNames.length;
+        assert gameIDs.size() == A_FEW_NAMES.length;
         assert games.size() == gameIDs.size();
     }
 
     @Test
     void getGameTest() {
-        HashSet<Integer> gameIDs = populateGames(aFewNames);
+        HashSet<Integer> gameIDs = populateGames(A_FEW_NAMES);
         for (int id : gameIDs) {
             assert service.getGame(id) != null;
         }
-        int invalidID = RandomGenerator.getDefault().nextInt() + aFewNames.length;
+        int invalidID = RandomGenerator.getDefault().nextInt() + A_FEW_NAMES.length;
         assert service.getGame(invalidID) == null;
     }
 

@@ -12,6 +12,7 @@ public class ChessGame {
 
     private TeamColor currentTurn = TeamColor.WHITE;
     private ChessBoard board = ChessBoard.newGameBoard();
+    private final ArrayList<ChessPiece> enPassantOn = new ArrayList<>();
 
     public ChessGame() {
     }
@@ -172,8 +173,13 @@ public class ChessGame {
         if (moveOptions == null || !moveOptions.contains(move) || currentTurn != piece.getTeamColor()) {
             throw new InvalidMoveException("Invalid move: " + move);
         }
+        resetEnPassant();
         if (isCastle(move)) {
             castle(move);
+        } else if(isPawnFirstMove(move)){
+            setEnPassant(move);
+        } else if (isEnPassant(move)) {
+            enPassantCapture(move);
         }
         hardMove(move);
         piece.setHasMoved(true);
@@ -210,6 +216,57 @@ public class ChessGame {
                 (Arrays.equals(castle.distance(), queenSide) || Arrays.equals(castle.distance(), kingSide));
     }
 
+    private boolean isPawnFirstMove(ChessMove move){
+        ChessPiece pawn = board.getPiece(move.getStartPosition());
+        if (pawn == null || pawn.getPieceType() != ChessPiece.PieceType.PAWN){
+            return false;
+        }
+        return Math.abs(move.getStartPosition().difference(move.getEndPosition())[0]) == 2;
+    }
+
+    private void setEnPassant(ChessMove move){
+        ChessPiece setNegative = board.getPiece(move.getEndPosition().offset(0, 1));
+        ChessPiece setPositive = board.getPiece(move.getEndPosition().offset(0, -1));
+        if(setNegative != null){
+            setNegative.setEnPassant(-1);
+            enPassantOn.add(setNegative);
+        }
+        if(setPositive != null){
+            setPositive.setEnPassant(1);
+            enPassantOn.add(setPositive);
+        }
+    }
+
+    private void resetEnPassant(){
+        for(ChessPiece pawn : enPassantOn){
+            pawn.setEnPassant(0);
+        }
+        enPassantOn.clear();
+    }
+
+    private boolean isEnPassant(ChessMove move){
+        ChessPiece self = board.getPiece(move.getStartPosition());
+        if (self == null || self.getPieceType() != ChessPiece.PieceType.PAWN){
+            return false;
+        }
+        boolean pawnCapture = move.getStartPosition().getColumn() != move.getEndPosition().getColumn();
+        boolean openSquare = board.getPiece(move.getEndPosition()) == null;
+        ChessPosition foePos = getEnPassantFoePos(move);
+        ChessPiece foe = board.getPiece(foePos);
+        boolean isFoe = foe != null && foe.getPieceType() == ChessPiece.PieceType.PAWN
+                && foe.getTeamColor() != self.getTeamColor();
+        return pawnCapture && openSquare && isFoe;
+    }
+
+    private void enPassantCapture(ChessMove move){
+        ChessPosition foePos = getEnPassantFoePos(move);
+        board.removePiece(foePos);
+    }
+
+    private static ChessPosition getEnPassantFoePos(ChessMove move) {
+        return new ChessPosition(move.getStartPosition().getRow(), move.getEndPosition().getColumn());
+    }
+
     /**
      * Determines if the given team is in check
      *
@@ -217,13 +274,6 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        //debugging print statements version
-        /*
-        System.out.println("Is " + teamColor + " in check? \n" + board);
-        boolean out = !attacksOnKing(teamColor).isEmpty();
-        System.out.println(teamColor + ": in check? " + out);
-        return out;
-        */
         return !attacksOnKing(teamColor).isEmpty();
     }
 
@@ -309,13 +359,6 @@ public class ChessGame {
             return false;
         }
         return allValidMoves(teamColor).isEmpty();
-        // debugging print statements
-        /*
-        System.out.println("Is " + teamColor + " in checkmate? \n" + board);
-        boolean out = allValidMoves(teamColor).isEmpty();
-        System.out.println(teamColor + ": in checkmate? " + out);
-        return out;
-        */
     }
 
     /**

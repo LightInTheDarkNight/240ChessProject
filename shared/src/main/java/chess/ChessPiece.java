@@ -186,7 +186,7 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
         protoMoves.addAll(checkPawnAdvances(board, myPosition, direction));
 
         ChessMove enPassantMove = enPassant(board, myPosition, direction);
-        if (enPassantMove != null && !protoMoves.contains(enPassantMove)) {
+        if (enPassantMove != null) {
             protoMoves.add(enPassantMove);
         }
 
@@ -196,8 +196,8 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
     private ArrayList<ChessMove> checkPawnCaptures(ChessBoard board, ChessPosition myPosition, int direction) {
         ArrayList<ChessMove> moves = new ArrayList<>();
 
-        final int[][] CAPTURE_OFFSETS = new int[][]{{direction, 1}, {direction, -1}};
-        for (var capture : CAPTURE_OFFSETS) {
+        final int[][] captureOffsets = new int[][]{{direction, 1}, {direction, -1}};
+        for (var capture : captureOffsets) {
             ChessPosition endPosition = myPosition.offset(capture);
             if (validCapture(board, endPosition)) {
                 moves.add(new ChessMove(myPosition, endPosition));
@@ -209,10 +209,10 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
     private ArrayList<ChessMove> checkPawnAdvances(ChessBoard board, ChessPosition myPosition, int direction) {
         ArrayList<ChessMove> moves = new ArrayList<>();
         int startRow = color.pawnStartRow();
-        final int[][] OPEN_OFFSETS = myPosition.getRow() == startRow ?
+        final int[][] openOffsets = myPosition.getRow() == startRow ?
                 new int[][]{{direction, 0}, {2 * direction, 0}} : new int[][]{{direction, 0}};
         boolean firstSquareOpen = true;
-        for (var open : OPEN_OFFSETS) {
+        for (var open : openOffsets) {
             ChessPosition endPosition = myPosition.offset(open);
             if (firstSquareOpen && openSquare(board, endPosition)) {
                 moves.add(new ChessMove(myPosition, endPosition));
@@ -234,17 +234,16 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
             return null;
         }
 
-        ChessPiece foe = board.getPiece(myPosition.offset(enPassant, 0));
+        ChessPiece foe = board.getPiece(myPosition.offset(0, enPassant));
         if (foe == null || foe.color == color || foe.type != PieceType.PAWN) {
             return null;
         }
 
-        return new ChessMove(myPosition, myPosition.offset(enPassant, direction));
+        return new ChessMove(myPosition, myPosition.offset(direction, enPassant));
 
     }
 
-    private ArrayList<ChessMove> permutePawnPromotions(
-            ChessPosition myPosition, ArrayList<ChessMove> protoMoves) {
+    private ArrayList<ChessMove> permutePawnPromotions(ChessPosition myPosition, ArrayList<ChessMove> protoMoves) {
         int promoRow = color.pawnPromoRow();
         ArrayList<ChessMove> moves = new ArrayList<>();
         for (var move : protoMoves) {

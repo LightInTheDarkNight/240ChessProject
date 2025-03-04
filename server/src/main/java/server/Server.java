@@ -97,7 +97,7 @@ public class Server {
 
     private static Object listGamesHandler(Request req, Response res) throws UnauthorizedRequestException {
         userService.authenticate(req.headers(AUTH));
-        return successHandler(res, serializer.toJson(gameService.listGames()));
+        return successHandler(res, serializer.toJson(Map.of("games", gameService.listGames())));
     }
 
 

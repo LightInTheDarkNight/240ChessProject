@@ -27,7 +27,7 @@ class ClearServiceTest {
         service = new ClearService(USER_LIST, GAME_LIST, AUTH_LIST);
     }
 
-    void populateAuth() {
+    void populateAuth() throws DataAccessException{
 
 
         AuthData[] credentials = new AuthData[8];
@@ -39,13 +39,13 @@ class ClearServiceTest {
         }
     }
 
-    void populateUsers() {
+    void populateUsers() throws DataAccessException{
         UserData[] users = new UserData[8];
         for(int i = 0; i < 8; i++) {
             users[i] = new UserData(USERNAMES[i], AUTH_TOKENS_AND_PASSWORDS[i], EMAILS_AND_GAME_NAMES[i]);
         }
         for(var item : users) {
-            USER_LIST.addUser(item);
+            USER_LIST.add(item);
         }
     }
 
@@ -66,7 +66,7 @@ class ClearServiceTest {
         populateGames();
         assert service.clearAll();
         for(int i = 0; i < 8; i ++){
-            assert USER_LIST.getUserByUsername(USERNAMES[i]) == null;
+            assert USER_LIST.get(USERNAMES[i]) == null;
             assert AUTH_LIST.getAuthByToken(AUTH_TOKENS_AND_PASSWORDS[i]) == null;
             assert GAME_LIST.get(i) == null;
         }

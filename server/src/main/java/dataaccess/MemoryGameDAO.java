@@ -26,11 +26,6 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public GameData get(GameData game){
-        return game == null? null : get(game.gameID());
-    }
-
-    @Override
     public Collection<GameData> getGameList() {
         return gameDataList.values().stream().toList();
     }
@@ -39,10 +34,5 @@ public class MemoryGameDAO implements GameDAO {
     public boolean delete(Integer gameID) {
         gameDataList.remove(gameID);
         return gameDataList.get(gameID) == null;
-    }
-
-    @Override
-    public boolean delete(GameData game){
-        return game == null || delete(game.gameID());
     }
 }

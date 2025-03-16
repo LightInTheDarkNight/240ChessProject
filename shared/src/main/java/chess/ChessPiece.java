@@ -57,12 +57,8 @@ public final class ChessPiece implements Comparable<ChessPiece>, Cloneable {
 
         public boolean continuous() {
             return switch (this) {
-                case KING -> false;
-                case QUEEN -> true;
-                case BISHOP -> true;
-                case KNIGHT -> false;
-                case ROOK -> true;
-                case PAWN -> false;
+                case KING, PAWN, KNIGHT -> false;
+                case QUEEN, ROOK, BISHOP -> true;
             };
         }
 

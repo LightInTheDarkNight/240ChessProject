@@ -1,6 +1,7 @@
 package service;
 
 import dataaccess.AuthDAO;
+import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
 import model.AuthData;
 import model.UserData;
@@ -31,8 +32,8 @@ public class UserService {
         return auth;
     }
 
-    public AuthData login(UserData user) throws UnauthorizedRequestException {
-        var correct = users.getUserByUsername(user);
+    public AuthData login(UserData user) throws UnauthorizedRequestException, DataAccessException {
+        var correct = users.get(user);
         if (correct == null || !Objects.equals(correct.password(), user.password())) {
             throw new UnauthorizedRequestException();
         }
@@ -49,8 +50,8 @@ public class UserService {
         return credentials.deleteAuth(authenticate(authToken));
     }
 
-    public AuthData register(UserData user) throws AlreadyTakenException {
-        if (!users.addUser(user)) {
+    public AuthData register(UserData user) throws AlreadyTakenException, DataAccessException {
+        if (!users.add(user)) {
             throw new AlreadyTakenException();
         }
         try {

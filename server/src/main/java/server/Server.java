@@ -67,7 +67,7 @@ public class Server {
     }
 
 
-    private static Object registerHandler(Request req, Response res) throws WebException {
+    private static Object registerHandler(Request req, Response res) throws WebException, DataAccessException {
         UserData toCreate = SERIALIZER.fromJson(req.body(), UserData.class);
         if (toCreate.username() == null || toCreate.password() == null || toCreate.email() == null) {
             throw new BadRequestException();
@@ -76,13 +76,15 @@ public class Server {
         return successHandler(res, SERIALIZER.toJson(auth));
     }
 
-    private static Object loginHandler(Request req, Response res) throws UnauthorizedRequestException {
+    private static Object loginHandler(Request req, Response res)
+            throws UnauthorizedRequestException, DataAccessException {
         UserData user = SERIALIZER.fromJson(req.body(), UserData.class);
         AuthData auth = USER_SERVICE.login(user);
         return successHandler(res, SERIALIZER.toJson(auth));
     }
 
-    private static Object logoutHandler(Request req, Response res) throws UnauthorizedRequestException {
+    private static Object logoutHandler(Request req, Response res)
+            throws UnauthorizedRequestException, DataAccessException {
         String authToken = req.headers(AUTH);
         boolean success = USER_SERVICE.logout(authToken);
         if (success) {

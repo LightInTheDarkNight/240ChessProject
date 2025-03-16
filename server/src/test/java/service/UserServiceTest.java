@@ -6,8 +6,6 @@ import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class UserServiceTest {
     private static final UserDAO USER_LIST = new MemoryUserDAO();
     private static final AuthDAO AUTH_LIST = new MemoryAuthDAO();
@@ -19,7 +17,7 @@ class UserServiceTest {
     private static UserService service = new UserService(USER_LIST, AUTH_LIST);
 
     @BeforeEach
-    void setup() {
+    void setup() throws DataAccessException {
         USER_LIST.clear();
         AUTH_LIST.clear();
         service = new UserService(USER_LIST, AUTH_LIST);
@@ -35,13 +33,13 @@ class UserServiceTest {
         }
     }
 
-    void populateUsers() {
+    void populateUsers() throws DataAccessException{
         UserData[] users = new UserData[8];
         for(int i = 0; i < 8; i++) {
             users[i] = new UserData(USERNAMES[i], AUTH_TOKENS_AND_PASSWORDS[i], EMAILS_AND_GAME_NAMES[i]);
         }
         for(var item : users) {
-            USER_LIST.addUser(item);
+            USER_LIST.add(item);
         }
     }
 

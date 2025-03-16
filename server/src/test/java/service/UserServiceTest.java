@@ -1,35 +1,31 @@
 package service;
 
-import chess.ChessGame;
 import dataaccess.*;
 import model.AuthData;
-import model.GameData;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ClearServiceTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class UserServiceTest {
     private static final UserDAO USER_LIST = new MemoryUserDAO();
-    private static final GameDAO GAME_LIST = new MemoryGameDAO();
     private static final AuthDAO AUTH_LIST = new MemoryAuthDAO();
     private static final String[] USERNAMES = {"Johnathan", "Abraham", "Isaac", "Jacobugath",
             "YouTube", "Google", "Apple", "Mozart"};
     private static final String[] AUTH_TOKENS_AND_PASSWORDS = {"A", "B", "C", "D", "E", "F", "G", "H", "I",};
     private static final String[] EMAILS_AND_GAME_NAMES = {"b-dubs", "john", "tess", "quiz",
             "trix", "izet", "gorm", "temple"};
-    private static ClearService service = new ClearService(USER_LIST, GAME_LIST, AUTH_LIST);
+    private static UserService service = new UserService(USER_LIST, AUTH_LIST);
 
     @BeforeEach
-    void setup() throws DataAccessException{
+    void setup() {
         USER_LIST.clear();
-        GAME_LIST.clear();
         AUTH_LIST.clear();
-        service = new ClearService(USER_LIST, GAME_LIST, AUTH_LIST);
+        service = new UserService(USER_LIST, AUTH_LIST);
     }
 
     void populateAuth() {
-
-
         AuthData[] credentials = new AuthData[8];
         for(int i = 0; i < 8; i++) {
             credentials[i] = new AuthData(AUTH_TOKENS_AND_PASSWORDS[i], USERNAMES[i]);
@@ -49,26 +45,24 @@ class ClearServiceTest {
         }
     }
 
-    void populateGames() throws DataAccessException{
-        GameData[] games = new GameData[8];
-        for(int i = 0; i < 8; i++) {
-            games[i] = new GameData(i + 1, USERNAMES[i], USERNAMES[(i+2)%8], EMAILS_AND_GAME_NAMES[i], new ChessGame());
-        }
-        for(var item : games) {
-            GAME_LIST.add(item);
-        }
+    @Test
+    void getUsernameTest() {
+
     }
 
     @Test
-    void clearAll() throws DataAccessException{
-        populateUsers();
-        populateAuth();
-        populateGames();
-        assert service.clearAll();
-        for(int i = 0; i < 8; i ++){
-            assert USER_LIST.getUserByUsername(USERNAMES[i]) == null;
-            assert AUTH_LIST.getAuthByToken(AUTH_TOKENS_AND_PASSWORDS[i]) == null;
-            assert GAME_LIST.get(i) == null;
-        }
+    void authenticateTest() {
+    }
+
+    @Test
+    void loginTest() {
+    }
+
+    @Test
+    void logoutTest() {
+    }
+
+    @Test
+    void registerTest() {
     }
 }

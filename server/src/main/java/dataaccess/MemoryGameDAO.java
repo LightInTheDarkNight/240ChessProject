@@ -15,9 +15,19 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public boolean addGame(GameData game) {
+    public boolean add(GameData game) {
         GameData old = gameDataList.putIfAbsent(game.gameID(), game);
         return old == null && gameDataList.get(game.gameID()).equals(game);
+    }
+
+    @Override
+    public GameData get(Integer gameID) {
+        return gameDataList.get(gameID);
+    }
+
+    @Override
+    public GameData get(GameData game){
+        return game == null? null : get(game.gameID());
     }
 
     @Override
@@ -26,13 +36,13 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public GameData getGameByID(int gameID) {
-        return gameDataList.get(gameID);
+    public boolean delete(Integer gameID) {
+        gameDataList.remove(gameID);
+        return gameDataList.get(gameID) == null;
     }
 
     @Override
-    public boolean deleteGameByID(int gameID) {
-        gameDataList.remove(gameID);
-        return gameDataList.get(gameID) == null;
+    public boolean delete(GameData game){
+        return game == null || delete(game.gameID());
     }
 }

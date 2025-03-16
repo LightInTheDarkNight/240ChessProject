@@ -92,7 +92,7 @@ public class Server {
     }
 
 
-    private static Object createGameHandler(Request req, Response res) throws WebException {
+    private static Object createGameHandler(Request req, Response res) throws WebException, DataAccessException {
         USER_SERVICE.authenticate(req.headers(AUTH));
         var out = GAME_SERVICE.createGame(SERIALIZER.fromJson(req.body(), CreateGameRequest.class));
         if(out == null){
@@ -101,7 +101,7 @@ public class Server {
         return successHandler(res, SERIALIZER.toJson(out));
     }
 
-    private static Object joinGameHandler(Request req, Response res) throws WebException {
+    private static Object joinGameHandler(Request req, Response res) throws WebException, DataAccessException {
         String username = USER_SERVICE.getUsername(req.headers(AUTH));
         GameService.JoinGameRequest joinReq = SERIALIZER.fromJson(req.body(), JoinGameRequest.class);
         boolean success;
@@ -116,13 +116,14 @@ public class Server {
         }
     }
 
-    private static Object listGamesHandler(Request req, Response res) throws UnauthorizedRequestException {
+    private static Object listGamesHandler(Request req, Response res)
+            throws UnauthorizedRequestException, DataAccessException {
         USER_SERVICE.authenticate(req.headers(AUTH));
         return successHandler(res, SERIALIZER.toJson(Map.of("games", GAME_SERVICE.listGames())));
     }
 
 
-    private static Object clearHandler(Request req, Response res) {
+    private static Object clearHandler(Request req, Response res) throws DataAccessException{
         if (CLEAR_SERVICE.clearAll()) {
             res.type(JSON);
             res.status(200);

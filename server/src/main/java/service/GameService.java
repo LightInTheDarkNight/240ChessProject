@@ -2,6 +2,7 @@ package service;
 
 import chess.ChessGame;
 import chess.ChessGame.TeamColor;
+import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import model.GameData;
 import server.Server.AlreadyTakenException;
@@ -16,8 +17,8 @@ public class GameService {
         this.games = games;
     }
 
-    public CreateGameResponse createGame(CreateGameRequest game) {
-        boolean success = games.addGame(new GameData(nextGameID, null, null, game.gameName, new ChessGame()));
+    public CreateGameResponse createGame(CreateGameRequest game) throws DataAccessException {
+        boolean success = games.add(new GameData(nextGameID, null, null, game.gameName, new ChessGame()));
         if (success) {
             return new CreateGameResponse(nextGameID++);
         }
@@ -32,11 +33,11 @@ public class GameService {
     public record CreateGameResponse(int gameID) {
     }
 
-    public GameData getGame(int id) {
-        return games.getGameByID(id);
+    public GameData getGame(int id) throws DataAccessException {
+        return games.get(id);
     }
 
-    public boolean joinGame(String username, JoinGameRequest req) throws AlreadyTakenException {
+    public boolean joinGame(String username, JoinGameRequest req) throws AlreadyTakenException, DataAccessException{
         if (username == null || req.playerColor == null) {
             throw new RuntimeException("username or color were null");
         }
@@ -61,7 +62,7 @@ public class GameService {
     public record JoinGameRequest(TeamColor playerColor, int gameID) {
     }
 
-    public Collection<GameData> listGames() {
+    public Collection<GameData> listGames() throws DataAccessException {
         return games.getGameList();
     }
 }

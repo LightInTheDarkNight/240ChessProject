@@ -1,6 +1,7 @@
 package service;
 
 import chess.ChessGame;
+import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import dataaccess.MemoryGameDAO;
 import model.GameData;
@@ -20,12 +21,12 @@ class GameServiceTest {
     private static final String[] A_FEW_NAMES = {"jackhammer", "johnathan", "coffee cup", "Jackson 5", "SQL sucks"};
 
     @BeforeEach
-    void setup() {
+    void setup() throws DataAccessException {
         assert GAME_LIST.clear();
         service = new GameService(GAME_LIST);
     }
 
-    private static HashSet<Integer> populateGames(String[] names) {
+    private static HashSet<Integer> populateGames(String[] names) throws DataAccessException {
         HashSet<Integer> idResults = new HashSet<>();
         for (var name : names) {
             GameService.CreateGameResponse response = service.createGame(new GameService.CreateGameRequest(name));
@@ -37,13 +38,13 @@ class GameServiceTest {
 
 
     @Test
-    void createGameTest() {
+    void createGameTest() throws DataAccessException {
         boolean success = service.createGame(new GameService.CreateGameRequest(A_FEW_NAMES[0])) != null;
         assert success;
     }
 
     @Test
-    void listGamesTest() {
+    void listGamesTest() throws DataAccessException {
         HashSet<Integer> gameIDs = populateGames(A_FEW_NAMES);
         Collection<GameData> games = service.listGames();
         assert gameIDs.size() == A_FEW_NAMES.length;
@@ -51,12 +52,12 @@ class GameServiceTest {
     }
 
     @Test
-    void emptyListGamesTest() {
+    void emptyListGamesTest() throws DataAccessException {
         assert service.listGames().isEmpty();
     }
 
     @Test
-    void getGameTest() {
+    void getGameTest() throws DataAccessException {
         HashSet<Integer> gameIDs = populateGames(A_FEW_NAMES);
         for (int id : gameIDs) {
             assert service.getGame(id) != null;
@@ -64,13 +65,13 @@ class GameServiceTest {
     }
 
     @Test
-    void invalidGetGameTest(){
+    void invalidGetGameTest() throws DataAccessException {
         int invalidID = RandomGenerator.getDefault().nextInt();
         assert service.getGame(invalidID) == null;
     }
 
     @Test
-    void joinGameTest() {
+    void joinGameTest() throws DataAccessException {
         int id = service.createGame(new GameService.CreateGameRequest("test")).gameID();
         try {
             service.joinGame("JohnCena", new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id));
@@ -84,7 +85,7 @@ class GameServiceTest {
     }
 
     @Test
-    void negativeJoinGameTest(){
+    void negativeJoinGameTest() throws DataAccessException {
         assertThrows(RuntimeException.class, () ->
                 service.joinGame("JohnCena", new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, 5)));
         int id = service.createGame(new GameService.CreateGameRequest("test")).gameID();

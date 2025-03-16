@@ -14,18 +14,18 @@ public class MemoryAuthDAO implements AuthDAO {
     }
 
     @Override
-    public void addAuth(AuthData authorization) {
-        authDataList.put(authorization.authToken(), authorization);
+    public boolean add(AuthData auth) {
+        AuthData old = authDataList.putIfAbsent(auth.authToken(), auth);
+        return old == null && authDataList.get(auth.authToken()) == auth;
     }
 
     @Override
-    public AuthData getAuthByToken(String authToken) {
+    public AuthData get(String authToken) {
         return authDataList.get(authToken);
     }
 
     @Override
-    public boolean deleteAuth(AuthData authorization) {
-        String token = authorization.authToken();
+    public boolean delete(String token) {
         authDataList.remove(token);
         return authDataList.get(token) == null;
     }

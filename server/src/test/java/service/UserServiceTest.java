@@ -23,13 +23,13 @@ class UserServiceTest {
         service = new UserService(USER_LIST, AUTH_LIST);
     }
 
-    void populateAuth() {
+    void populateAuth() throws DataAccessException {
         AuthData[] credentials = new AuthData[8];
         for(int i = 0; i < 8; i++) {
             credentials[i] = new AuthData(AUTH_TOKENS_AND_PASSWORDS[i], USERNAMES[i]);
         }
         for(var item : credentials) {
-            AUTH_LIST.addAuth(item);
+            AUTH_LIST.add(item);
         }
     }
 

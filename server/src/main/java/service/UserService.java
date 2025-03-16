@@ -20,12 +20,12 @@ public class UserService {
         this.credentials = auth;
     }
 
-    public String getUsername(String authToken) throws UnauthorizedRequestException {
+    public String getUsername(String authToken) throws UnauthorizedRequestException, DataAccessException {
         return authenticate(authToken).username();
     }
 
-    public AuthData authenticate(String authToken) throws UnauthorizedRequestException {
-        AuthData auth = credentials.getAuthByToken(authToken);
+    public AuthData authenticate(String authToken) throws UnauthorizedRequestException, DataAccessException {
+        AuthData auth = credentials.get(authToken);
         if (auth == null) {
             throw new UnauthorizedRequestException();
         }
@@ -40,14 +40,14 @@ public class UserService {
         return createAuthData(correct.username());
     }
 
-    private AuthData createAuthData(String username) {
+    private AuthData createAuthData(String username) throws DataAccessException {
         var auth = new AuthData(UUID.randomUUID().toString(), username);
-        credentials.addAuth(auth);
+        credentials.add(auth);
         return auth;
     }
 
-    public boolean logout(String authToken) throws UnauthorizedRequestException {
-        return credentials.deleteAuth(authenticate(authToken));
+    public boolean logout(String authToken) throws UnauthorizedRequestException, DataAccessException {
+        return credentials.delete(authenticate(authToken));
     }
 
     public AuthData register(UserData user) throws AlreadyTakenException, DataAccessException {

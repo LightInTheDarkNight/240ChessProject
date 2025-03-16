@@ -35,7 +35,7 @@ class ClearServiceTest {
             credentials[i] = new AuthData(AUTH_TOKENS_AND_PASSWORDS[i], USERNAMES[i]);
         }
         for(var item : credentials) {
-            AUTH_LIST.addAuth(item);
+            AUTH_LIST.add(item);
         }
     }
 
@@ -67,7 +67,7 @@ class ClearServiceTest {
         assert service.clearAll();
         for(int i = 0; i < 8; i ++){
             assert USER_LIST.get(USERNAMES[i]) == null;
-            assert AUTH_LIST.getAuthByToken(AUTH_TOKENS_AND_PASSWORDS[i]) == null;
+            assert AUTH_LIST.get(AUTH_TOKENS_AND_PASSWORDS[i]) == null;
             assert GAME_LIST.get(i) == null;
         }
     }

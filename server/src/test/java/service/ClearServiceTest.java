@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class ClearServiceTest {
-    private static final UserDAO USER_LIST = new MemoryUserDAO();
+    private static final UserDAO USER_LIST = new DBUserDAO();
     private static final GameDAO GAME_LIST = new MemoryGameDAO();
     private static final AuthDAO AUTH_LIST = new MemoryAuthDAO();
     private static final String[] USERNAMES = {"Johnathan", "Abraham", "Isaac", "Jacobugath",

@@ -23,7 +23,7 @@ public class Server {
     private static final GameService GAME_SERVICE;
 
     static {
-        UserDAO userDAO = new MemoryUserDAO();
+        UserDAO userDAO = new DBUserDAO();
         GameDAO gameDAO = new MemoryGameDAO();
         AuthDAO authDAO = new MemoryAuthDAO();
         CLEAR_SERVICE = new ClearService(userDAO, gameDAO, authDAO);

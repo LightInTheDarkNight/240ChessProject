@@ -1,10 +1,8 @@
 package service;
 
 import dataaccess.*;
-import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import server.Server;
 
@@ -18,22 +16,22 @@ class UserServiceTest {
             "YouTube", "Google", "Apple", "Mozart"};
     private static final String[] PASSWORDS = {"A", "B", "C", "D", "E", "F", "G", "H", "I",};
     private static final String[] EMAILS = {"b-dubs", "john", "tess", "quiz", "trix", "izet", "gorm", "temple"};
-    private static final UserService service = new UserService(USER_LIST, AUTH_LIST);
-    private static final String[] authTokens = new String[8];
+    private static final UserService SERVICE = new UserService(USER_LIST, AUTH_LIST);
+    private static final String[] AUTH_TOKENS = new String[8];
 
     @BeforeEach
     void setup() throws Exception {
         USER_LIST.clear();
         AUTH_LIST.clear();
         for(int i = 0; i < 8; i ++){
-            authTokens[i] = service.register(new UserData(USERNAMES[i], PASSWORDS[i], EMAILS[i])).authToken();
+            AUTH_TOKENS[i] = SERVICE.register(new UserData(USERNAMES[i], PASSWORDS[i], EMAILS[i])).authToken();
         }
     }
 
     @Test
     void registerTest() throws Exception {
         for(int i = 0; i < 8; i ++){
-            assert authTokens[i] != null;
+            assert AUTH_TOKENS[i] != null;
         }
     }
 
@@ -42,7 +40,7 @@ class UserServiceTest {
         for(int i = 0; i < 8; i ++){
             int a = i;
             assertThrows(Server.AlreadyTakenException.class, () -> {
-                service.register(new UserData(USERNAMES[a], PASSWORDS[a], EMAILS[a]));
+                SERVICE.register(new UserData(USERNAMES[a], PASSWORDS[a], EMAILS[a]));
             });
         }
     }
@@ -52,7 +50,7 @@ class UserServiceTest {
         for(int i = 0; i < 8; i ++){
             int a = i;
             assertDoesNotThrow(() -> {
-                service.authenticate(authTokens[a]);
+                SERVICE.authenticate(AUTH_TOKENS[a]);
             });
         }
     }
@@ -60,7 +58,7 @@ class UserServiceTest {
     @Test
     void authenticateTestThrows() {
         assertThrows(Server.UnauthorizedRequestException.class, ()->{
-            service.authenticate("NOT_AN_AUTH_TOKEN");
+            SERVICE.authenticate("NOT_AN_AUTH_TOKEN");
         });
     }
 
@@ -69,33 +67,33 @@ class UserServiceTest {
         for(int i = 0; i < 8; i ++){
             int a = i;
             assertDoesNotThrow(() -> {
-                assert service.getUsername(authTokens[a]).equals(USERNAMES[a]);
+                assert SERVICE.getUsername(AUTH_TOKENS[a]).equals(USERNAMES[a]);
             });
         }
     }
     @Test
     void getUsernameTestThrows() {
         assertThrows(Server.UnauthorizedRequestException.class, ()->{
-            service.authenticate("NOT_AN_AUTH_TOKEN");
+            SERVICE.authenticate("NOT_AN_AUTH_TOKEN");
         });
     }
 
     @Test
     void loginTestFailsUnregistered() {
         assertThrows(Server.UnauthorizedRequestException.class, ()->{
-            service.login(new UserData("BOB_ISN'T_REGISTERED", "NOT_A_PASSWORD", null));
+            SERVICE.login(new UserData("BOB_ISN'T_REGISTERED", "NOT_A_PASSWORD", null));
         });
     }
     @Test
     void loginTestFailsWrongPassword() {
         assertThrows(Server.UnauthorizedRequestException.class, ()->{
-            service.login(new UserData("Johnathan", "NOT_A_PASSWORD", null));
+            SERVICE.login(new UserData("Johnathan", "NOT_A_PASSWORD", null));
         });
     }
     @Test
     void loginTestSuccess() throws Exception{
         for(int i = 0; i < 8; i ++){
-            assert service.login(new UserData(USERNAMES[i], PASSWORDS[i], EMAILS[i])) != null;
+            assert SERVICE.login(new UserData(USERNAMES[i], PASSWORDS[i], EMAILS[i])) != null;
         }
     }
 
@@ -103,7 +101,7 @@ class UserServiceTest {
     void logoutTest() {
         assertDoesNotThrow(()->{
             for(int i = 0; i < 8; i ++){
-                assert service.logout(authTokens[i]);
+                assert SERVICE.logout(AUTH_TOKENS[i]);
             }
         });
     }
@@ -113,7 +111,7 @@ class UserServiceTest {
         for(int i = 0; i < 8; i ++){
             int a = i;
             assertThrows(Server.UnauthorizedRequestException.class, ()->{
-                service.logout(authTokens[a]);
+                SERVICE.logout(AUTH_TOKENS[a]);
             });
         }
     }

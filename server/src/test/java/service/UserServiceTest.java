@@ -25,20 +25,20 @@ class UserServiceTest {
 
     void populateAuth() throws DataAccessException {
         AuthData[] credentials = new AuthData[8];
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
             credentials[i] = new AuthData(AUTH_TOKENS_AND_PASSWORDS[i], USERNAMES[i]);
         }
-        for(var item : credentials) {
+        for (var item : credentials) {
             AUTH_LIST.add(item);
         }
     }
 
-    void populateUsers() throws DataAccessException{
+    void populateUsers() throws DataAccessException {
         UserData[] users = new UserData[8];
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
             users[i] = new UserData(USERNAMES[i], AUTH_TOKENS_AND_PASSWORDS[i], EMAILS_AND_GAME_NAMES[i]);
         }
-        for(var item : users) {
+        for (var item : users) {
             USER_LIST.add(item);
         }
     }

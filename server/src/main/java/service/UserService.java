@@ -51,7 +51,7 @@ public class UserService {
     }
 
     public AuthData register(UserData user) throws AlreadyTakenException, DataAccessException {
-        String hashed = BCrypt.hashpw(user.password(),BCrypt.gensalt());
+        String hashed = BCrypt.hashpw(user.password(), BCrypt.gensalt());
         UserData hashedUser = new UserData(user.username(), hashed, user.email());
         if (!users.add(hashedUser)) {
             throw new AlreadyTakenException();

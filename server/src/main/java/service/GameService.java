@@ -20,8 +20,7 @@ public class GameService {
         int id = games.newGame(new GameData(0, null, null, game.gameName, new ChessGame()));
         if (id != 0) {
             return new CreateGameResponse(id);
-        }
-        else {
+        } else {
             return null;
         }
     }
@@ -36,7 +35,7 @@ public class GameService {
         return games.get(id);
     }
 
-    public boolean joinGame(String username, JoinGameRequest req) throws AlreadyTakenException, DataAccessException{
+    public boolean joinGame(String username, JoinGameRequest req) throws AlreadyTakenException, DataAccessException {
         if (username == null || req.playerColor == null) {
             throw new RuntimeException("username or color were null");
         }

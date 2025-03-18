@@ -20,52 +20,52 @@ class ClearServiceTest {
     private static ClearService service = new ClearService(USER_LIST, GAME_LIST, AUTH_LIST);
 
     @BeforeEach
-    void setup() throws DataAccessException{
+    void setup() throws DataAccessException {
         USER_LIST.clear();
         GAME_LIST.clear();
         AUTH_LIST.clear();
         service = new ClearService(USER_LIST, GAME_LIST, AUTH_LIST);
     }
 
-    void populateAuth() throws DataAccessException{
+    void populateAuth() throws DataAccessException {
 
 
         AuthData[] credentials = new AuthData[8];
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
             credentials[i] = new AuthData(AUTH_TOKENS_AND_PASSWORDS[i], USERNAMES[i]);
         }
-        for(var item : credentials) {
+        for (var item : credentials) {
             AUTH_LIST.add(item);
         }
     }
 
-    void populateUsers() throws DataAccessException{
+    void populateUsers() throws DataAccessException {
         UserData[] users = new UserData[8];
-        for(int i = 0; i < 8; i++) {
+        for (int i = 0; i < 8; i++) {
             users[i] = new UserData(USERNAMES[i], AUTH_TOKENS_AND_PASSWORDS[i], EMAILS_AND_GAME_NAMES[i]);
         }
-        for(var item : users) {
+        for (var item : users) {
             USER_LIST.add(item);
         }
     }
 
-    void populateGames() throws DataAccessException{
+    void populateGames() throws DataAccessException {
         GameData[] games = new GameData[8];
-        for(int i = 0; i < 8; i++) {
-            games[i] = new GameData(i + 1, USERNAMES[i], USERNAMES[(i+2)%8], EMAILS_AND_GAME_NAMES[i], new ChessGame());
+        for (int i = 0; i < 8; i++) {
+            games[i] = new GameData(i + 1, USERNAMES[i], USERNAMES[(i + 2) % 8], EMAILS_AND_GAME_NAMES[i], new ChessGame());
         }
-        for(var item : games) {
+        for (var item : games) {
             GAME_LIST.add(item);
         }
     }
 
     @Test
-    void clearAll() throws DataAccessException{
+    void clearAll() throws DataAccessException {
         populateUsers();
         populateAuth();
         populateGames();
         assert service.clearAll();
-        for(int i = 0; i < 8; i ++){
+        for (int i = 0; i < 8; i++) {
             assert USER_LIST.get(USERNAMES[i]) == null;
             assert AUTH_LIST.get(AUTH_TOKENS_AND_PASSWORDS[i]) == null;
             assert GAME_LIST.get(i) == null;

@@ -24,7 +24,7 @@ public class MemoryUserDAO implements UserDAO {
     }
 
     @Override
-    public boolean delete(String username){
+    public boolean delete(String username) {
         userDataList.remove(username);
         return userDataList.get(username) == null;
     }

@@ -24,8 +24,8 @@ public class MemoryGameDAO implements GameDAO {
     }
 
     @Override
-    public int newGame(GameData game){
-        while(gameDataList.get(nextGameID) != null){
+    public int newGame(GameData game) {
+        while (gameDataList.get(nextGameID) != null) {
             nextGameID++;
         }
         GameData newGame = new GameData(nextGameID, game.whiteUsername(), game.blackUsername(), game.gameName(),
@@ -55,21 +55,21 @@ public class MemoryGameDAO implements GameDAO {
     public boolean updateUsername(Integer gameID, ChessGame.TeamColor color, String newUsername)
             throws AlreadyTakenException {
         GameData game = gameDataList.get(gameID);
-        if(game == null){
+        if (game == null) {
             throw new RuntimeException("Game not in database.");
         }
-        String old = switch(color){
+        String old = switch (color) {
             case WHITE -> game.whiteUsername();
             case BLACK -> game.blackUsername();
         };
-        if(old != null){
+        if (old != null) {
             throw new AlreadyTakenException();
         }
-        switch(color){
+        switch (color) {
             case WHITE -> gameDataList.put(game.gameID(), game.setWhitePlayer(newUsername));
             case BLACK -> gameDataList.put(game.gameID(), game.setBlackPlayer(newUsername));
         }
-        return switch(color){
+        return switch (color) {
             case WHITE -> gameDataList.get(gameID).whiteUsername().equals(newUsername);
             case BLACK -> gameDataList.get(gameID).blackUsername().equals(newUsername);
         };

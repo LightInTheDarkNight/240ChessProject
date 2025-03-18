@@ -176,7 +176,7 @@ public class ChessGame {
         resetEnPassant();
         if (isCastle(move)) {
             castle(move);
-        } else if(isPawnFirstMove(move)){
+        } else if (isPawnFirstMove(move)) {
             setEnPassant(move);
         } else if (isEnPassant(move)) {
             enPassantCapture(move);
@@ -216,37 +216,37 @@ public class ChessGame {
                 (Arrays.equals(castle.distance(), queenSide) || Arrays.equals(castle.distance(), kingSide));
     }
 
-    private boolean isPawnFirstMove(ChessMove move){
+    private boolean isPawnFirstMove(ChessMove move) {
         ChessPiece pawn = board.getPiece(move.getStartPosition());
-        if (pawn == null || pawn.getPieceType() != ChessPiece.PieceType.PAWN){
+        if (pawn == null || pawn.getPieceType() != ChessPiece.PieceType.PAWN) {
             return false;
         }
         return Math.abs(move.getStartPosition().difference(move.getEndPosition())[0]) == 2;
     }
 
-    private void setEnPassant(ChessMove move){
+    private void setEnPassant(ChessMove move) {
         ChessPiece setNegative = board.getPiece(move.getEndPosition().offset(0, 1));
         ChessPiece setPositive = board.getPiece(move.getEndPosition().offset(0, -1));
-        if(setNegative != null){
+        if (setNegative != null) {
             setNegative.setEnPassant(-1);
             enPassantOn.add(setNegative);
         }
-        if(setPositive != null){
+        if (setPositive != null) {
             setPositive.setEnPassant(1);
             enPassantOn.add(setPositive);
         }
     }
 
-    private void resetEnPassant(){
-        for(ChessPiece pawn : enPassantOn){
+    private void resetEnPassant() {
+        for (ChessPiece pawn : enPassantOn) {
             pawn.setEnPassant(0);
         }
         enPassantOn.clear();
     }
 
-    private boolean isEnPassant(ChessMove move){
+    private boolean isEnPassant(ChessMove move) {
         ChessPiece self = board.getPiece(move.getStartPosition());
-        if (self == null || self.getPieceType() != ChessPiece.PieceType.PAWN){
+        if (self == null || self.getPieceType() != ChessPiece.PieceType.PAWN) {
             return false;
         }
         boolean pawnCapture = move.getStartPosition().getColumn() != move.getEndPosition().getColumn();
@@ -258,7 +258,7 @@ public class ChessGame {
         return pawnCapture && openSquare && isFoe;
     }
 
-    private void enPassantCapture(ChessMove move){
+    private void enPassantCapture(ChessMove move) {
         ChessPosition foePos = getEnPassantFoePos(move);
         board.removePiece(foePos);
     }

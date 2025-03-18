@@ -97,7 +97,7 @@ public class Server {
     private static Object createGameHandler(Request req, Response res) throws WebException, DataAccessException {
         USER_SERVICE.authenticate(req.headers(AUTH));
         var out = GAME_SERVICE.createGame(SERIALIZER.fromJson(req.body(), CreateGameRequest.class));
-        if(out == null){
+        if (out == null) {
             throw new WebException("Error: failed to add game to database");
         }
         return successHandler(res, SERIALIZER.toJson(out));
@@ -125,7 +125,7 @@ public class Server {
     }
 
 
-    private static Object clearHandler(Request req, Response res) throws DataAccessException{
+    private static Object clearHandler(Request req, Response res) throws DataAccessException {
         if (CLEAR_SERVICE.clearAll()) {
             res.type(JSON);
             res.status(200);

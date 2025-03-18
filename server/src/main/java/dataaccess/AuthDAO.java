@@ -2,11 +2,11 @@ package dataaccess;
 
 import model.AuthData;
 
-public interface AuthDAO extends DAO<AuthData, String>{
+public interface AuthDAO extends DAO<AuthData, String> {
 
     @Override
     default AuthData get(AuthData auth) throws DataAccessException {
-        return auth == null? null : get(auth.authToken());
+        return auth == null ? null : get(auth.authToken());
     }
 
     @Override

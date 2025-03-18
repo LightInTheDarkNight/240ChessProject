@@ -14,7 +14,7 @@ import java.util.List;
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
 public class DBGameDAO implements GameDAO {
-    private static final Gson serializer = new Gson();
+    private static final Gson SERIALIZER = new Gson();
 
     static {
         try {
@@ -67,7 +67,7 @@ public class DBGameDAO implements GameDAO {
             insertStatement.setString(2, data.whiteUsername());
             insertStatement.setString(3, data.blackUsername());
             insertStatement.setString(4, data.gameName());
-            insertStatement.setString(5, serializer.toJson(data.game()));
+            insertStatement.setString(5, SERIALIZER.toJson(data.game()));
 
             insertStatement.executeUpdate();
             return true;
@@ -88,15 +88,15 @@ public class DBGameDAO implements GameDAO {
             insertStatement.setString(1, data.whiteUsername());
             insertStatement.setString(2, data.blackUsername());
             insertStatement.setString(3, data.gameName());
-            insertStatement.setString(4, serializer.toJson(data.game()));
+            insertStatement.setString(4, SERIALIZER.toJson(data.game()));
 
             insertStatement.executeUpdate();
             var resultSet = insertStatement.getGeneratedKeys();
-            var ID = 0;
+            var id = 0;
             if (resultSet.next()) {
-                ID = resultSet.getInt(1);
+                id = resultSet.getInt(1);
             }
-            return ID;
+            return id;
         } catch (SQLException e) {
             throw new DataAccessException("Error: game database insert failed");
         }
@@ -114,7 +114,7 @@ public class DBGameDAO implements GameDAO {
             }
             return new GameData(results.getInt("gameid"), results.getString("white_username"),
                     results.getString("black_username"), results.getString("game_name"),
-                    serializer.fromJson(results.getString("game"), ChessGame.class));
+                    SERIALIZER.fromJson(results.getString("game"), ChessGame.class));
         } catch (SQLException e) {
             throw new DataAccessException("Error: game database select failed");
         }
@@ -142,7 +142,7 @@ public class DBGameDAO implements GameDAO {
             while (results.next()) {
                 games.add(new GameData(results.getInt("gameid"), results.getString("white_username"),
                         results.getString("black_username"), results.getString("game_name"),
-                        serializer.fromJson(results.getString("game"), ChessGame.class)));
+                        SERIALIZER.fromJson(results.getString("game"), ChessGame.class)));
             }
 
             return games;

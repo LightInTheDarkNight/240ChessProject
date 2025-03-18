@@ -1,6 +1,8 @@
 package dataaccess;
 
+import chess.ChessGame;
 import model.GameData;
+import server.Server.AlreadyTakenException;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -47,5 +49,29 @@ public class MemoryGameDAO implements GameDAO {
     public boolean delete(Integer gameID) {
         gameDataList.remove(gameID);
         return gameDataList.get(gameID) == null;
+    }
+
+    @Override
+    public boolean updateUsername(Integer gameID, ChessGame.TeamColor color, String newUsername)
+            throws AlreadyTakenException {
+        GameData game = gameDataList.get(gameID);
+        if(game == null){
+            throw new RuntimeException("Game not in database.");
+        }
+        String old = switch(color){
+            case WHITE -> game.whiteUsername();
+            case BLACK -> game.blackUsername();
+        };
+        if(old != null){
+            throw new AlreadyTakenException();
+        }
+        switch(color){
+            case WHITE -> gameDataList.put(game.gameID(), game.setWhitePlayer(newUsername));
+            case BLACK -> gameDataList.put(game.gameID(), game.setBlackPlayer(newUsername));
+        }
+        return switch(color){
+            case WHITE -> gameDataList.get(gameID).whiteUsername().equals(newUsername);
+            case BLACK -> gameDataList.get(gameID).blackUsername().equals(newUsername);
+        };
     }
 }

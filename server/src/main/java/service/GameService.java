@@ -41,21 +41,7 @@ public class GameService {
             throw new RuntimeException("username or color were null");
         }
 
-        GameData original = getGame(req.gameID);
-        if (original == null) {
-            throw new RuntimeException("game not in database");
-        }
-
-        GameData out;
-
-        if (req.playerColor() == TeamColor.WHITE && original.whiteUsername() == null) {
-            out = original.setWhitePlayer(username);
-        } else if (req.playerColor() == TeamColor.BLACK && original.blackUsername() == null) {
-            out = original.setBlackPlayer(username);
-        } else {
-            throw new AlreadyTakenException();
-        }
-        return games.updateGame(out);
+        return games.updateUsername(req.gameID, req.playerColor, username);
     }
 
     public record JoinGameRequest(TeamColor playerColor, int gameID) {

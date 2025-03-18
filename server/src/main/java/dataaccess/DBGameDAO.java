@@ -20,7 +20,7 @@ public class DBGameDAO implements GameDAO{
                 try (Connection conn = ChessDatabaseManager.getConnection()) {
                     var createUserTable = conn.prepareStatement("""
                         
-                            CREATE TABLE `game_data` (
+                            CREATE TABLE IF NOT EXISTS `game_data` (
                            `gameid` int NOT NULL AUTO_INCREMENT,
                            `white_username` varchar(64) DEFAULT NULL,
                            `black_username` varchar(64) DEFAULT NULL,
@@ -41,7 +41,7 @@ public class DBGameDAO implements GameDAO{
                     createUserTable.executeUpdate();
                 }
         } catch (DataAccessException | SQLException e) {
-            throw new RuntimeException("User Table creation and initialization failed: " + e.getMessage());
+            throw new RuntimeException("Game table creation and initialization failed: " + e.getMessage());
         }
     }
     public boolean clear() throws DataAccessException {
@@ -86,6 +86,7 @@ public class DBGameDAO implements GameDAO{
             insertStatement.setString(3, data.gameName());
             insertStatement.setString(4, serializer.toJson(data.game()));
 
+            insertStatement.executeUpdate();
             var resultSet = insertStatement.getGeneratedKeys();
             var ID = 0;
             if (resultSet.next()) {
@@ -111,7 +112,7 @@ public class DBGameDAO implements GameDAO{
                     results.getString("black_username"), results.getString("game_name"),
                     serializer.fromJson(results.getString("game"), ChessGame.class));
         }catch (SQLException e) {
-            throw new DataAccessException("Error: user database select failed");
+            throw new DataAccessException("Error: game database select failed");
         }
     }
 
@@ -123,7 +124,7 @@ public class DBGameDAO implements GameDAO{
             deleteStatement.executeUpdate();
             return true;
         }catch (SQLException e) {
-            throw new DataAccessException("Error: user database delete failed");
+            throw new DataAccessException("Error: game database delete failed");
         }
     }
 
@@ -142,7 +143,12 @@ public class DBGameDAO implements GameDAO{
 
             return games;
         }catch (SQLException e) {
-            throw new DataAccessException("Error: user database select failed");
+            throw new DataAccessException("Error: game database select failed");
         }
+    }
+
+    @Override
+    public boolean updateUsername(Integer gameID, ChessGame.TeamColor color, String newUsername){
+        return false;
     }
 }

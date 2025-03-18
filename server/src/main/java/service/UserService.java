@@ -5,10 +5,10 @@ import dataaccess.DataAccessException;
 import dataaccess.UserDAO;
 import model.AuthData;
 import model.UserData;
+import org.mindrot.jbcrypt.BCrypt;
 import server.Server.AlreadyTakenException;
 import server.Server.UnauthorizedRequestException;
 
-import java.util.Objects;
 import java.util.UUID;
 
 public class UserService {
@@ -34,7 +34,7 @@ public class UserService {
 
     public AuthData login(UserData user) throws UnauthorizedRequestException, DataAccessException {
         var correct = users.get(user);
-        if (correct == null || !Objects.equals(correct.password(), user.password())) {
+        if (correct == null || !BCrypt.checkpw(user.password(), correct.password())) {
             throw new UnauthorizedRequestException();
         }
         return createAuthData(correct.username());
@@ -51,7 +51,9 @@ public class UserService {
     }
 
     public AuthData register(UserData user) throws AlreadyTakenException, DataAccessException {
-        if (!users.add(user)) {
+        String hashed = BCrypt.hashpw(user.password(),BCrypt.gensalt());
+        UserData hashedUser = new UserData(user.username(), hashed, user.email());
+        if (!users.add(hashedUser)) {
             throw new AlreadyTakenException();
         }
         try {

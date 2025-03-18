@@ -24,7 +24,7 @@ public class Server {
 
     static {
         UserDAO userDAO = new DBUserDAO();
-        GameDAO gameDAO = new MemoryGameDAO();
+        GameDAO gameDAO = new DBGameDAO();
         AuthDAO authDAO = new MemoryAuthDAO();
         CLEAR_SERVICE = new ClearService(userDAO, gameDAO, authDAO);
         USER_SERVICE = new UserService(userDAO, authDAO);

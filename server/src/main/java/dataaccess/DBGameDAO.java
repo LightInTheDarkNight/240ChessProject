@@ -3,7 +3,7 @@ package dataaccess;
 import chess.ChessGame;
 import com.google.gson.Gson;
 import model.GameData;
-import model.UserData;
+import server.Server.AlreadyTakenException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -46,7 +46,7 @@ public class DBGameDAO implements GameDAO{
     }
     public boolean clear() throws DataAccessException {
         try (Connection conn = ChessDatabaseManager.getConnection();
-             var deleteStatement = conn.prepareStatement("TRUNCATE TABLE users")) {
+             var deleteStatement = conn.prepareStatement("TRUNCATE TABLE game_data")) {
             deleteStatement.executeUpdate();
             return true;
         }catch (SQLException e) {
@@ -148,7 +148,35 @@ public class DBGameDAO implements GameDAO{
     }
 
     @Override
-    public boolean updateUsername(Integer gameID, ChessGame.TeamColor color, String newUsername){
-        return false;
+    public boolean updateUsername(Integer gameID, ChessGame.TeamColor color, String newUsername)
+            throws AlreadyTakenException, DataAccessException {
+        try (Connection conn = ChessDatabaseManager.getConnection();
+             ) {
+
+            String columnName = switch(color){
+                case WHITE -> "white_username";
+                case BLACK -> "black_username";
+            };
+            var queryStatement = conn.prepareStatement("SELECT " + columnName + " FROM game_data WHERE gameid=?");
+            var updateStatement = conn.prepareStatement("UPDATE game_data SET " + columnName + "=? WHERE gameid=?");
+            queryStatement.setInt(1, gameID);
+
+            var results = queryStatement.executeQuery();
+            if (!results.next()){
+                throw new RuntimeException("Game not in database");
+            }
+            if(results.getString(1) != null){
+                throw new AlreadyTakenException();
+            }
+
+            updateStatement.setString(1, newUsername);
+            updateStatement.setInt(2, gameID);
+
+            updateStatement.executeUpdate();
+
+            return true;
+        }catch (SQLException e) {
+            throw new DataAccessException("Error: game database select failed");
+        }
     }
 }

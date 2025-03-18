@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 public class MemoryGameDAO implements GameDAO {
     private final HashMap<Integer, GameData> gameDataList = new HashMap<>();
+    private static int nextGameID = 1;
 
     @Override
     public boolean clear() {
@@ -18,6 +19,18 @@ public class MemoryGameDAO implements GameDAO {
     public boolean add(GameData game) {
         GameData old = gameDataList.putIfAbsent(game.gameID(), game);
         return old == null && gameDataList.get(game.gameID()).equals(game);
+    }
+
+    @Override
+    public int newGame(GameData game){
+        while(gameDataList.get(nextGameID) != null){
+            nextGameID++;
+        }
+        GameData newGame = new GameData(nextGameID, game.whiteUsername(), game.blackUsername(), game.gameName(),
+                game.game());
+        gameDataList.put(nextGameID, newGame);
+        nextGameID++;
+        return newGame.gameID();
     }
 
     @Override

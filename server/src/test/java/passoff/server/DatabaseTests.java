@@ -93,6 +93,7 @@ public class DatabaseTests {
         executeForAllTables((tableName, connection) -> {
             try (var statement = connection.createStatement()) {
                 var sql = "SELECT count(*) FROM " + tableName;
+                //noinspection SqlSourceToSinkFlow
                 try (var resultSet = statement.executeQuery(sql)) {
                     if (resultSet.next()) {
                         rows.addAndGet(resultSet.getInt(1));

@@ -12,6 +12,8 @@ public interface GameDAO extends DAO<GameData, Integer>{
      */
     Collection<GameData> getGameList() throws DataAccessException;
 
+    int newGame(GameData newGame) throws DataAccessException;
+
     @Override
     default boolean delete(GameData game) throws DataAccessException {
         return game == null || delete(game.gameID());

@@ -63,11 +63,6 @@ public class DBUserDAO implements UserDAO{
             }
             return new UserData(results.getString("username"), results.getString("password"),
                     results.getString("email"));
-//            var resultSet = preparedStatement.getGeneratedKeys();
-//            var ID = 0;
-//            if (resultSet.next()) {
-//                ID = resultSet.getInt(1);
-//            }
         }catch (SQLException e) {
             throw new DataAccessException("Error: user database select failed");
         }

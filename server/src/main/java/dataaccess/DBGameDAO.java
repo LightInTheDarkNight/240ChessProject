@@ -1,10 +1,19 @@
 package dataaccess;
 
+import chess.ChessGame;
+import com.google.gson.Gson;
+import model.GameData;
+import model.UserData;
+
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static java.sql.Statement.*;
-public class DBGameDAO {
+public class DBGameDAO implements GameDAO{
+    private static final Gson serializer = new Gson();
     static {
         try {
             ChessDatabaseManager.createDatabase();
@@ -33,6 +42,107 @@ public class DBGameDAO {
                 }
         } catch (DataAccessException | SQLException e) {
             throw new RuntimeException("User Table creation and initialization failed: " + e.getMessage());
+        }
+    }
+    public boolean clear() throws DataAccessException {
+        try (Connection conn = ChessDatabaseManager.getConnection();
+             var deleteStatement = conn.prepareStatement("TRUNCATE TABLE users")) {
+            deleteStatement.executeUpdate();
+            return true;
+        }catch (SQLException e) {
+            throw new DataAccessException("Error: game database clear failed: " + e.getMessage());
+        }
+    }
+
+    public boolean add(GameData data) throws DataAccessException {
+        try (Connection conn = ChessDatabaseManager.getConnection();
+             var insertStatement = conn.prepareStatement(
+                     "INSERT INTO game_data (gameid, white_username, black_username, game_name, game) " +
+                             "VALUES(?, ?, ?, ?, ?)",
+                     RETURN_GENERATED_KEYS)){
+            insertStatement.setInt(1, data.gameID());
+            insertStatement.setString(2, data.whiteUsername());
+            insertStatement.setString(3, data.blackUsername());
+            insertStatement.setString(4, data.gameName());
+            insertStatement.setString(5, serializer.toJson(data.game()));
+
+            insertStatement.executeUpdate();
+            return true;
+        }catch (SQLException e) {
+            if(e.getErrorCode()==1062){
+                return false;
+            }
+            throw new DataAccessException("Error: game database insert failed");
+        }
+    }
+    public int newGame(GameData data) throws DataAccessException {
+        try (Connection conn = ChessDatabaseManager.getConnection();
+             var insertStatement = conn.prepareStatement(
+                     "INSERT INTO game_data (white_username, black_username, game_name, game) " +
+                             "VALUES(?, ?, ?, ?)",
+                     RETURN_GENERATED_KEYS)){
+            insertStatement.setString(1, data.whiteUsername());
+            insertStatement.setString(2, data.blackUsername());
+            insertStatement.setString(3, data.gameName());
+            insertStatement.setString(4, serializer.toJson(data.game()));
+
+            var resultSet = insertStatement.getGeneratedKeys();
+            var ID = 0;
+            if (resultSet.next()) {
+                ID = resultSet.getInt(1);
+            }
+            return ID;
+        }catch (SQLException e) {
+            throw new DataAccessException("Error: game database insert failed");
+        }
+    }
+
+    @Override
+    public GameData get(Integer gameID) throws DataAccessException {
+        try (Connection conn = ChessDatabaseManager.getConnection();
+            var queryStatement = conn.prepareStatement(
+                "SELECT gameid, white_username, black_username, game_name, game FROM game_data WHERE gameid=?")) {
+            queryStatement.setInt(1, gameID);
+            var results = queryStatement.executeQuery();
+            if (!results.next()){
+                return null;
+            }
+            return new GameData(results.getInt("gameid"), results.getString("white_username"),
+                    results.getString("black_username"), results.getString("game_name"),
+                    serializer.fromJson(results.getString("game"), ChessGame.class));
+        }catch (SQLException e) {
+            throw new DataAccessException("Error: user database select failed");
+        }
+    }
+
+    @Override
+    public boolean delete(Integer gameID) throws DataAccessException {
+        try (Connection conn = ChessDatabaseManager.getConnection();
+             var deleteStatement = conn.prepareStatement("DELETE FROM game_data WHERE gameid=?")) {
+            deleteStatement.setInt(1, gameID);
+            deleteStatement.executeUpdate();
+            return true;
+        }catch (SQLException e) {
+            throw new DataAccessException("Error: user database delete failed");
+        }
+    }
+
+    @Override
+    public Collection<GameData> getGameList() throws DataAccessException {
+        List<GameData> games = new ArrayList<>();
+        try (Connection conn = ChessDatabaseManager.getConnection();
+             var listStatement = conn.prepareStatement("SELECT * FROM game_data")) {
+            var results = listStatement.executeQuery();
+
+            while (results.next()) {
+                games.add(new GameData(results.getInt("gameid"), results.getString("white_username"),
+                        results.getString("black_username"), results.getString("game_name"),
+                        serializer.fromJson(results.getString("game"), ChessGame.class)));
+            }
+
+            return games;
+        }catch (SQLException e) {
+            throw new DataAccessException("Error: user database select failed");
         }
     }
 }

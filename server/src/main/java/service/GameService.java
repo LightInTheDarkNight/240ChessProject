@@ -11,16 +11,15 @@ import java.util.Collection;
 
 public class GameService {
     private final GameDAO games;
-    private static int nextGameID = 1;
 
     public GameService(GameDAO games) {
         this.games = games;
     }
 
     public CreateGameResponse createGame(CreateGameRequest game) throws DataAccessException {
-        boolean success = games.add(new GameData(nextGameID, null, null, game.gameName, new ChessGame()));
-        if (success) {
-            return new CreateGameResponse(nextGameID++);
+        int id = games.newGame(new GameData(0, null, null, game.gameName, new ChessGame()));
+        if (id != 0) {
+            return new CreateGameResponse(id);
         }
         else {
             return null;

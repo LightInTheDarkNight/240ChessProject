@@ -87,4 +87,45 @@ public class ServerFacadeTests {
         });
     }
 
+    @Test
+    public void loginSuccess() {
+        UserData user = new UserData("Jethro", "password", "example@aol.com");
+        UserData withoutEmail = new UserData("Jethro", "password", null);
+        assertDoesNotThrow(() -> {
+            AuthData response = facade.register(user);
+            assert response != null;
+            facade.logout(response.authToken());
+            response = facade.login(user);
+            assert response != null;
+            facade.logout(response.authToken());
+            response = facade.login(withoutEmail);
+            assert response != null;
+            facade.logout(response.authToken());
+        });
+    }
+
+    @Test
+    public void loginFail() {
+        UserData user = new UserData("Jethro", "password", "example@aol.com");
+        UserData missingPassword = new UserData("Jethro", null, null);
+        UserData emptyPassword = new UserData("Jethro", "", null);
+        UserData badUser = new UserData("Jethro", "imposter", null);
+
+        //Before registration
+        assertThrows(ResponseException.class, () -> facade.login(user));
+
+        assertDoesNotThrow(() -> {
+            AuthData response = facade.register(user);
+            assert response != null;
+            facade.logout(response.authToken());
+        });
+
+        //Wrong Password
+        assertThrows(ResponseException.class, () -> facade.login(badUser));
+        //Missing Password
+        assertThrows(ResponseException.class, () -> facade.login(missingPassword));
+        //Empty Password
+        assertThrows(ResponseException.class, () -> facade.login(emptyPassword));
+    }
+
 }

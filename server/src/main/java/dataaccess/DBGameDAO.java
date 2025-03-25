@@ -7,11 +7,12 @@ import server.Server.AlreadyTakenException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
+
 import java.util.Collection;
 import java.util.List;
+import java.util.ArrayList;
 
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
 
 public class DBGameDAO implements GameDAO {
     private static final Gson SERIALIZER = new Gson();

@@ -39,7 +39,6 @@ public class GameService {
         if (username == null || req.playerColor == null) {
             throw new RuntimeException("username or color were null");
         }
-
         return games.updateUsername(req.gameID, req.playerColor, username);
     }
 

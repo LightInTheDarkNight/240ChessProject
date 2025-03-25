@@ -1,5 +1,7 @@
+import chess.ChessGame;
 import com.google.gson.Gson;
-import jdk.jshell.spi.ExecutionControl;
+import model.AuthData;
+import model.GameData;
 import model.UserData;
 
 import java.io.IOException;
@@ -9,6 +11,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerFacade {
     private final String serverUrl;
@@ -17,39 +22,49 @@ public class ServerFacade {
     private static final String GET = "GET";
     private static final String PUT = "PUT";
 
-    public ServerFacade(String url) throws ResponseException {
+    public ServerFacade(String url) {
         serverUrl = url;
     }
-    public String register(UserData user) throws ResponseException {
-        String path = "/user";
 
-        return "";
+    public AuthData register(UserData user) throws ResponseException {
+        String path = "/user";
+        return makeRequest(POST, path, null, user, AuthData.class);
     }
-    public String login() throws ResponseException {
+
+    public AuthData login(UserData user) throws ResponseException {
         String path = "/session";
-        return "";
+        return makeRequest(POST, path, null, user, AuthData.class);
     }
-    public String logout() throws ResponseException {
+
+    public void logout(String authToken) throws ResponseException {
         String path = "/session";
-        return "";
+        makeRequest(DELETE, path, authToken, null, null);
     }
-    public String createGame() throws ResponseException {
+
+    public int createGame(String authToken, String gameName) throws ResponseException {
         String path = "/game";
-        return "";
+        return (Integer) makeRequest(POST, path, authToken, new Gson().toJson(Map.of("gameName", gameName)),
+                HashMap.class).get("gameID");
     }
-    public String playGame() throws ResponseException {
+
+    public void playGame(String authToken, ChessGame.TeamColor color, int gameID) throws ResponseException {
         String path = "/game";
-        return "";
+        makeRequest(POST, path, authToken, new Gson().toJson(Map.of("playerColor", color, "gameID", gameID)),
+                null);
     }
-    public String listGames() throws ResponseException {
+
+    public Collection<GameData> listGames(String authToken) throws ResponseException {
         String path = "/game";
-        return "";
+        return (Collection<GameData>) (makeRequest(GET, path, authToken, null, HashMap.class).get("games"));
     }
+
+    
     public String observeGame() throws ResponseException {
         String path = "/game";
         return "";
     }
-    private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass)
+
+    private <T> T makeRequest(String method, String path, String auth, Object request, Class<T> responseClass)
             throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();
@@ -57,6 +72,9 @@ public class ServerFacade {
             http.setRequestMethod(method);
             http.setDoOutput(true);
 
+            if(auth != null){
+                http.setRequestProperty("Authorization", auth);
+            }
             writeBody(request, http);
             http.connect();
             throwIfNotSuccessful(http);
@@ -67,6 +85,7 @@ public class ServerFacade {
             throw new ResponseException(500, ex.getMessage());
         }
     }
+
     private static void writeBody(Object request, HttpURLConnection http) throws IOException {
         if (request != null) {
             http.addRequestProperty("Content-Type", "application/json");
@@ -76,6 +95,7 @@ public class ServerFacade {
             }
         }
     }
+
     private void throwIfNotSuccessful(HttpURLConnection http) throws IOException, ResponseException {
         int status = http.getResponseCode();
         if (!isSuccessful(status)) {
@@ -88,6 +108,7 @@ public class ServerFacade {
             throw new ResponseException(status, "other failure: " + status);
         }
     }
+
     private static <T> T readBody(HttpURLConnection http, Class<T> responseClass) throws IOException {
         T response = null;
         if (http.getContentLength() < 0) {

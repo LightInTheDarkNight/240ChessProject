@@ -7,6 +7,9 @@ import service.ClearService;
 
 import java.lang.reflect.Field;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 public class ServerFacadeTests {
 
@@ -43,7 +46,7 @@ public class ServerFacadeTests {
     @Test
     public void registerSuccess() {
         UserData user = new UserData("Jethro", "password", "example@aol.com");
-        Assertions.assertDoesNotThrow(() -> {
+        assertDoesNotThrow(() -> {
             AuthData response = facade.register(user);
             assert response != null;
         });
@@ -53,8 +56,35 @@ public class ServerFacadeTests {
     public void registerFail() {
         UserData user = new UserData("Jethro", "password", "example@aol.com");
 
-        Assertions.assertDoesNotThrow(() -> facade.register(user));
-        Assertions.assertThrows(ResponseException.class, () -> facade.register(user));
+        assertDoesNotThrow(() -> facade.register(user));
+        assertThrows(ResponseException.class, () -> facade.register(user));
+    }
+
+    @Test
+    public void logoutSuccess() {
+        UserData user = new UserData("Jethro", "password", "example@aol.com");
+        assertDoesNotThrow(() -> {
+            AuthData response = facade.register(user);
+            assert response != null;
+            facade.logout(response.authToken());
+        });
+    }
+
+    @Test
+    public void logoutFail() {
+        UserData user = new UserData("Jethro", "password", "example@aol.com");
+        String authToken = "";
+
+        //never valid
+        assertThrows(ResponseException.class, () -> facade.logout(authToken));
+
+        //previously valid
+        assertDoesNotThrow(() -> {
+            AuthData response = facade.register(user);
+            assert response != null;
+            facade.logout(response.authToken());
+            assertThrows(ResponseException.class, ()-> facade.logout(response.authToken()));
+        });
     }
 
 }

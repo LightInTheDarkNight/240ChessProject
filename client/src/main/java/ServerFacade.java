@@ -43,13 +43,14 @@ public class ServerFacade {
 
     public int createGame(String authToken, String gameName) throws ResponseException {
         String path = "/game";
-        return (Integer) makeRequest(POST, path, authToken, new Gson().toJson(Map.of("gameName", gameName)),
+        var temp = (Double) makeRequest(POST, path, authToken, Map.of("gameName", gameName),
                 HashMap.class).get("gameID");
+        return temp.intValue();
     }
 
     public void playGame(String authToken, ChessGame.TeamColor color, int gameID) throws ResponseException {
         String path = "/game";
-        makeRequest(POST, path, authToken, new Gson().toJson(Map.of("playerColor", color, "gameID", gameID)),
+        makeRequest(PUT, path, authToken, new Gson().toJson(Map.of("playerColor", color, "gameID", gameID)),
                 null);
     }
 
@@ -58,10 +59,10 @@ public class ServerFacade {
         return (Collection<GameData>) (makeRequest(GET, path, authToken, null, HashMap.class).get("games"));
     }
 
-    
-    public String observeGame() throws ResponseException {
+
+    public void observeGame() throws ResponseException {
         String path = "/game";
-        return "";
+        //do nothing
     }
 
     private <T> T makeRequest(String method, String path, String auth, Object request, Class<T> responseClass)

@@ -73,17 +73,18 @@ public class ServerFacadeTests {
     @Test
     public void logoutFail() {
         UserData user = new UserData("Jethro", "password", "example@aol.com");
-        String authToken = "";
 
         //never valid
-        assertThrows(ResponseException.class, () -> facade.logout(authToken));
+        assertThrows(ResponseException.class, () -> facade.logout(""));
+
+        assertThrows(ResponseException.class, () -> facade.logout("Fake"));
 
         //previously valid
         assertDoesNotThrow(() -> {
             AuthData response = facade.register(user);
             assert response != null;
             facade.logout(response.authToken());
-            assertThrows(ResponseException.class, ()-> facade.logout(response.authToken()));
+            assertThrows(ResponseException.class, () -> facade.logout(response.authToken()));
         });
     }
 
@@ -128,4 +129,34 @@ public class ServerFacadeTests {
         assertThrows(ResponseException.class, () -> facade.login(emptyPassword));
     }
 
+    @Test
+    public void createGameSuccess() {
+        UserData user = new UserData("Jethro", "password", "example@aol.com");
+        assertDoesNotThrow(() -> {
+            AuthData response = facade.register(user);
+            assert response != null;
+            int id = facade.createGame(response.authToken(), "newGame");
+            assert id > 0;
+        });
+
+    }
+
+    @Test
+    public void createGameFail() {
+        UserData user = new UserData("Jethro", "password", "example@aol.com");
+
+        //never valid
+        assertThrows(ResponseException.class, () -> facade.createGame("", "doesn't work"));
+
+        assertThrows(ResponseException.class, () -> facade.createGame("fake", "doesn't work"));
+
+
+        //previously valid
+        assertDoesNotThrow(() -> {
+            AuthData response = facade.register(user);
+            assert response != null;
+            facade.logout(response.authToken());
+            assertThrows(ResponseException.class, () -> facade.createGame(response.authToken(), "Unauthorized"));
+        });
+    }
 }

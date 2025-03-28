@@ -1,11 +1,16 @@
+package web;
+
 import dataaccess.DataAccessException;
 import model.AuthData;
+import model.GameData;
 import model.UserData;
 import org.junit.jupiter.api.*;
 import server.Server;
 import service.ClearService;
+import service.GameService;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -137,8 +142,8 @@ public class ServerFacadeTests {
             assert response != null;
             int id = facade.createGame(response.authToken(), "newGame");
             assert id > 0;
+            testForGamePresence(id);
         });
-
     }
 
     @Test
@@ -157,6 +162,41 @@ public class ServerFacadeTests {
             assert response != null;
             facade.logout(response.authToken());
             assertThrows(ResponseException.class, () -> facade.createGame(response.authToken(), "Unauthorized"));
+        });
+    }
+
+    @Test
+    public void listGamesSuccess(){
+        UserData user = new UserData("John Lock", "Rousseau", "you thought");
+        String[] gameNames = new String[]{"Game1", "Game2", "Game3", "Game4", "Game5"};
+        assertDoesNotThrow(() -> {
+            String token = facade.register(user).authToken();
+            for(String name:gameNames){
+                facade.createGame(token, name);
+            }
+            Collection<GameData> gameList = facade.listGames(token);
+            assert gameList != null;
+            assert gameList.size() == gameNames.length;
+            for(String name:gameNames){
+                boolean found = false;
+                for(GameData game:gameList){
+                    if (game.gameName().equals(name)) {
+                        found = true;
+                        break;
+                    }
+                }
+                assert found;
+            }
+        });
+    }
+
+    private static void testForGamePresence(int... gameIDs) {
+        assertDoesNotThrow(() -> {
+            Field gameService = server.getClass().getDeclaredField("GAME_SERVICE");
+            gameService.setAccessible(true);
+            for(int id:gameIDs){
+                assert ((GameService) gameService.get(server)).getGame(id) != null;
+            }
         });
     }
 }

@@ -1,5 +1,8 @@
+package web;
+
 import chess.ChessGame;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -56,7 +59,8 @@ public class ServerFacade {
 
     public Collection<GameData> listGames(String authToken) throws ResponseException {
         String path = "/game";
-        return (Collection<GameData>) (makeRequest(GET, path, authToken, null, HashMap.class).get("games"));
+        TypeToken<HashMap<String, Collection<GameData>>> type = new TypeToken<>(){};
+        return makeRequestTypeToken(GET, path, authToken, null, type).get("games");
     }
 
 
@@ -66,6 +70,14 @@ public class ServerFacade {
     }
 
     private <T> T makeRequest(String method, String path, String auth, Object request, Class<T> responseClass)
+            throws ResponseException {
+        return makeRequestTypeToken(method, path, auth, request,
+                responseClass == null? null : TypeToken.get(responseClass));
+    }
+
+
+
+    private <T> T makeRequestTypeToken(String method, String path, String auth, Object request, TypeToken<T> responseClass)
             throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();
@@ -110,7 +122,7 @@ public class ServerFacade {
         }
     }
 
-    private static <T> T readBody(HttpURLConnection http, Class<T> responseClass) throws IOException {
+    private static <T> T readBody(HttpURLConnection http, TypeToken<T> responseClass) throws IOException {
         T response = null;
         if (http.getContentLength() < 0) {
             try (InputStream respBody = http.getInputStream()) {

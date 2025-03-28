@@ -46,9 +46,8 @@ public class ServerFacade {
 
     public int createGame(String authToken, String gameName) throws ResponseException {
         String path = "/game";
-        var temp = (Double) makeRequest(POST, path, authToken, Map.of("gameName", gameName),
-                HashMap.class).get("gameID");
-        return temp.intValue();
+        TypeToken<HashMap<String, Integer>> type = new TypeToken<>(){};
+        return makeRequestTypeToken(POST, path, authToken, Map.of("gameName", gameName), type).get("gameID");
     }
 
     public void playGame(String authToken, ChessGame.TeamColor color, int gameID) throws ResponseException {
@@ -63,19 +62,13 @@ public class ServerFacade {
         return makeRequestTypeToken(GET, path, authToken, null, type).get("games");
     }
 
-
-    public void observeGame() throws ResponseException {
-        String path = "/game";
-        //do nothing
-    }
+    //TODO: public void observeGame() throws ResponseException{}
 
     private <T> T makeRequest(String method, String path, String auth, Object request, Class<T> responseClass)
             throws ResponseException {
         return makeRequestTypeToken(method, path, auth, request,
                 responseClass == null? null : TypeToken.get(responseClass));
     }
-
-
 
     private <T> T makeRequestTypeToken(String method, String path, String auth, Object request, TypeToken<T> responseClass)
             throws ResponseException {

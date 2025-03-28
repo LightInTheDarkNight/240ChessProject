@@ -189,6 +189,22 @@ public class ServerFacadeTests {
             }
         });
     }
+    @Test
+    public void listGamesThrows(){
+        UserData user = new UserData("John Lock", "Rousseau", "you thought");
+        String[] gameNames = new String[]{"Game1", "Game2", "Game3", "Game4", "Game5"};
+        assertDoesNotThrow(() -> {
+            String token = facade.register(user).authToken();
+            for(String name:gameNames){
+                assertThrows(ResponseException.class, () -> facade.createGame("", name));
+            }
+            for(String name:gameNames){
+                facade.createGame(token, name);
+            }
+            assertThrows(ResponseException.class, () -> facade.listGames(""));
+
+        });
+    }
 
     private static void testForGamePresence(int... gameIDs) {
         assertDoesNotThrow(() -> {

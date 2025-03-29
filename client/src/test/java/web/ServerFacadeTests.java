@@ -1,5 +1,6 @@
 package web;
 
+import chess.ChessGame;
 import dataaccess.DataAccessException;
 import model.AuthData;
 import model.GameData;
@@ -206,6 +207,59 @@ public class ServerFacadeTests {
         });
     }
 
+    @Test
+    public void playGameSuccess(){
+        UserData user = new UserData("John Lock", "Rousseau", "you thought");
+        UserData userB = new UserData("Washington", "USA", "VivaLaVida");
+        String[] gameNames = new String[]{"Game1", "Game2", "Game3", "Game4", "Game5"};
+        assertDoesNotThrow(() -> {
+            String token = facade.register(user).authToken();
+            int gameID = facade.createGame(token, "TestGame");
+            facade.playGame(token, ChessGame.TeamColor.BLACK, gameID);
+            testForGamePlayer(user.username(), ChessGame.TeamColor.BLACK, gameID);
+
+            String tokenB = facade.register(userB).authToken();
+            facade.playGame(tokenB, ChessGame.TeamColor.WHITE, gameID);
+            testForGamePlayer(userB.username(), ChessGame.TeamColor.WHITE, gameID);
+
+            gameID = facade.createGame(token, "TestGame2");
+            facade.playGame(token, ChessGame.TeamColor.WHITE, gameID);
+            testForGamePlayer(user.username(), ChessGame.TeamColor.WHITE, gameID);
+
+            for(String name:gameNames){
+                gameID = facade.createGame(token, name);
+                facade.playGame(token, ChessGame.TeamColor.WHITE, gameID);
+                facade.playGame(tokenB, ChessGame.TeamColor.BLACK, gameID);
+                testForGamePlayer(user.username(), ChessGame.TeamColor.WHITE, gameID);
+                testForGamePlayer(userB.username(), ChessGame.TeamColor.BLACK, gameID);
+            }
+        });
+    }
+
+    @Test
+    public void playGameThrows(){
+        UserData user = new UserData("John Lock", "Rousseau", "you thought");
+        UserData userB = new UserData("Washington", "USA", "VivaLaVida");
+        assertDoesNotThrow(() -> {
+            String token = facade.register(user).authToken();
+            int gameID = facade.createGame(token, "TestGame");
+            facade.playGame(token, ChessGame.TeamColor.BLACK, gameID);
+            testForGamePlayer(user.username(), ChessGame.TeamColor.BLACK, gameID);
+
+            String tokenB = facade.register(userB).authToken();
+            {
+                //Unauthorized
+                assertThrows(Exception.class, () -> facade.playGame("", ChessGame.TeamColor.WHITE, gameID));
+                //No Such Game
+                assertThrows(Exception.class, () -> facade.playGame(tokenB, ChessGame.TeamColor.WHITE, gameID *2));
+                //No Color provided
+                assertThrows(Exception.class, () -> facade.playGame(tokenB, null, gameID));
+                //Already Taken
+                assertThrows(Exception.class, () -> facade.playGame(tokenB, ChessGame.TeamColor.BLACK, gameID));
+            }
+        });
+    }
+
     private static void testForGamePresence(int... gameIDs) {
         assertDoesNotThrow(() -> {
             Field gameService = server.getClass().getDeclaredField("GAME_SERVICE");
@@ -213,6 +267,16 @@ public class ServerFacadeTests {
             for(int id:gameIDs){
                 assert ((GameService) gameService.get(server)).getGame(id) != null;
             }
+        });
+    }
+
+    private static void testForGamePlayer(String username, ChessGame.TeamColor color, int gameID) {
+        assertDoesNotThrow(() -> {
+            Field gameService = server.getClass().getDeclaredField("GAME_SERVICE");
+            gameService.setAccessible(true);
+            GameData game = ((GameService) gameService.get(server)).getGame(gameID);
+            assert game != null;
+            assert username.equals(color == ChessGame.TeamColor.WHITE? game.whiteUsername() : game.blackUsername());
         });
     }
 }

@@ -52,7 +52,7 @@ public class ServerFacade {
 
     public void playGame(String authToken, ChessGame.TeamColor color, int gameID) throws ResponseException {
         String path = "/game";
-        makeRequest(PUT, path, authToken, new Gson().toJson(Map.of("playerColor", color, "gameID", gameID)),
+        makeRequest(PUT, path, authToken, Map.of("playerColor", color, "gameID", gameID),
                 null);
     }
 

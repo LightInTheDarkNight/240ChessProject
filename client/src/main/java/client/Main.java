@@ -2,7 +2,7 @@ package client;
 
 import chess.ChessGame;
 import chess.ChessPiece;
-//import static client.EscapeSequences.*;
+//import static client.repls.EscapeSequences.*;
 
 public class Main {
     //private String authToken;

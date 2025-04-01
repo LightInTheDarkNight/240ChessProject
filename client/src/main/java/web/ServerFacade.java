@@ -62,7 +62,12 @@ public class ServerFacade {
         return makeRequestTypeToken(GET, path, authToken, null, type).get("games");
     }
 
-    //TODO: public void observeGame() throws ResponseException{}
+    public void observeGame(String authToken, ChessGame.TeamColor perspective, int gameID) throws ResponseException{
+        if(gameID < 1){
+            throw new ResponseException(400, "Error: Bad request");
+        }
+        return;
+    }
 
     private <T> T makeRequest(String method, String path, String auth, Object request, Class<T> responseClass)
             throws ResponseException {
@@ -70,8 +75,8 @@ public class ServerFacade {
                 responseClass == null? null : TypeToken.get(responseClass));
     }
 
-    private <T> T makeRequestTypeToken(String method, String path, String auth, Object request, TypeToken<T> responseClass)
-            throws ResponseException {
+    private <T> T makeRequestTypeToken(String method, String path, String auth, Object request,
+                                       TypeToken<T> responseClass) throws ResponseException {
         try {
             URL url = (new URI(serverUrl + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();

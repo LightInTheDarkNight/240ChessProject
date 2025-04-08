@@ -6,7 +6,7 @@ import java.util.Objects;
 
 
 /**
- * Represents a single chess piece
+ * Represents a single chess piece. Positions are 1-indexed.
  * <p>
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.

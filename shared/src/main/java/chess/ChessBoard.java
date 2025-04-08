@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * A chessboard that can hold and rearrange chess pieces.
+ * A chessboard that can hold and rearrange chess pieces. Assumes ChessPositions are 1-indexed when created.
  * <p>
  * Note: You can add to this class, but you may not alter
  * signature of the existing methods.

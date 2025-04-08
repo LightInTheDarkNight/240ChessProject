@@ -61,6 +61,36 @@ public class EscapeSequences {
     public static final String BLACK_PAWN = " ♟ ";
     public static final String EMPTY = " \u2003 ";
 
+    public static final String A_LABEL = " Ａ ";
+    public static final String B_LABEL = " Ｂ ";
+    public static final String C_LABEL = " Ｃ ";
+    public static final String D_LABEL = " Ｄ ";
+    public static final String E_LABEL = " Ｅ ";
+    public static final String F_LABEL = " Ｆ ";
+    public static final String G_LABEL = " Ｇ ";
+    public static final String H_LABEL = " Ｈ ";
+    public static final String ONE_LABEL = " １ ";
+    public static final String TWO_LABEL = " ２ ";
+    public static final String THREE_LABEL = " ３ ";
+    public static final String FOUR_LABEL = " ４ ";
+    public static final String FIVE_LABEL = " ５ ";
+    public static final String SIX_LABEL = " ６ ";
+    public static final String SEVEN_LABEL = " ７ ";
+    public static final String EIGHT_LABEL = " ８ ";
+
+    public static final String TABLE_TL_CORNER = "┌";
+    public static final String TABLE_BL_CORNER = "└";
+    public static final String TABLE_TR_CORNER = "┐";
+    public static final String TABLE_BR_CORNER = "┘";
+    public static final String TABLE_HL = "─";
+    public static final String TABLE_VL = "│";
+    public static final String TABLE_CROSS_JOIN = "┼";
+    public static final String TABLE_UP_JOIN = "┴";
+    public static final String TABLE_DOWN_JOIN = "┬";
+    public static final String TABLE_LEFT_JOIN = "┤";
+    public static final String TABLE_RIGHT_JOIN = "├";
+
+
     public static String moveCursorToLocation(int x, int y) {
         return UNICODE_ESCAPE + "[" + y + ";" + x + "H";
     }

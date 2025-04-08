@@ -3,12 +3,13 @@ import model.UserData;
 import web.ResponseException;
 
 import java.io.PrintStream;
-import java.util.Locale;
 import java.util.Scanner;
+import java.util.function.BiConsumer;
 
 import static client.repl.EscapeSequences.*;
 public class PreLoginOptions extends ChessMenuOptions{
     private static final String TAKEN = "already has that username.";
+
     public static void login(Scanner in, PrintStream out){
         checkFacade("login");
         try {
@@ -22,6 +23,7 @@ public class PreLoginOptions extends ChessMenuOptions{
             handleError(out, e, TAKEN);
         }
     }
+
     public static void register(Scanner in, PrintStream out){
         checkFacade("register");
         try {
@@ -34,6 +36,16 @@ public class PreLoginOptions extends ChessMenuOptions{
         } catch (ResponseException e) {
             handleError(out, e, TAKEN);
         }
+    }
+
+    public static BiConsumer<Scanner, PrintStream> nextOnSuccess(BiConsumer<Scanner, PrintStream> first,
+                                                                 BiConsumer<Scanner, PrintStream> next){
+        return (Scanner in, PrintStream out) -> {
+            first.accept(in, out);
+            if (!authToken.isBlank()){
+                next.accept(in, out);
+            }
+        };
     }
 
     private static UserData getUser(Scanner in, PrintStream out, boolean requireEmail){
@@ -58,8 +70,5 @@ public class PreLoginOptions extends ChessMenuOptions{
         }
         return new UserData(username, password, email);
     }
-
-
-
 
 }

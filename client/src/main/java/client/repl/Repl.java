@@ -6,10 +6,10 @@ import java.util.function.BiConsumer;
 import static client.repl.EscapeSequences.*;
 
 public class Repl implements BiConsumer<Scanner, PrintStream>{
-    private final HashMap<String, BiConsumer<Scanner, PrintStream>> FUNCTIONS = new HashMap<>();
+    private final HashMap<String, BiConsumer<Scanner, PrintStream>> functions = new HashMap<>();
     private String welcomeMessage = "Welcome! Please enter your commands below.";
     private String prompt = ">>> ";
-    private final Set<String> EXIT_WORDS = new HashSet<>();
+    private final Set<String> exitWords = new HashSet<>();
     private static final Set<Character> DIGITS = new HashSet<>(List.of('1','2','3','4','5','6','7','8','9','0'));
 
     public Repl(){
@@ -24,11 +24,11 @@ public class Repl implements BiConsumer<Scanner, PrintStream>{
         this(prompt);
         welcomeMessage = welcome;
     }
-    public Repl(String stop, String help, String welcome, String prompt){
-        this(prompt, welcome);
-        alias(stop, "Exit");
-        alias(help, "Help");
-    }
+//    TODO: public Repl(String stop, String help, String welcome, String prompt){
+//        this(prompt, welcome);
+//        alias(stop, "Exit");
+//        alias(help, "Help");
+//    }
 
     public void accept(Scanner in, PrintStream out){
         out.println(SET_TEXT_COLOR_BLUE + welcomeMessage + RESET_TEXT_COLOR);
@@ -37,12 +37,12 @@ public class Repl implements BiConsumer<Scanner, PrintStream>{
             out.print(SET_TEXT_COLOR_BLUE + prompt + RESET_TEXT_COLOR);
             String option = in.next().toLowerCase(Locale.ROOT);
             in.nextLine();
-            var function = FUNCTIONS.get(option);
+            var function = functions.get(option);
             if(function == null){
                 errorHandler(out);
             }else {
                 function.accept(in, out);
-                if(EXIT_WORDS.contains(option)){
+                if(exitWords.contains(option)){
                     break;
                 }
             }
@@ -50,22 +50,22 @@ public class Repl implements BiConsumer<Scanner, PrintStream>{
     }
 
     public void setFunction(String key, BiConsumer<Scanner, PrintStream> function){
-        FUNCTIONS.put(key, function);
+        functions.put(key, function);
         alias(key.toLowerCase(Locale.ROOT), key);
     }
 
     public void addExitFunction(String key, BiConsumer<Scanner, PrintStream> function){
-        EXIT_WORDS.add(key.toLowerCase(Locale.ROOT));
+        exitWords.add(key.toLowerCase(Locale.ROOT));
         setFunction(key, function);
-        if(EXIT_WORDS.size() == 2){
+        if(exitWords.size() == 2){
             setFunction("Exit", function);
         }
     }
 
     public void alias(String alias, String key){
-        FUNCTIONS.put(alias, FUNCTIONS.get(key));
-        if(EXIT_WORDS.contains(key)){
-            EXIT_WORDS.add(alias);
+        functions.put(alias, functions.get(key));
+        if(exitWords.contains(key)){
+            exitWords.add(alias);
         }
     }
 
@@ -78,8 +78,8 @@ public class Repl implements BiConsumer<Scanner, PrintStream>{
     private void getHelp(Scanner in, PrintStream out){
         out.println("Valid Menu Options include: ");
         removeDigits();
-        Set<String> keys = new HashSet<>(FUNCTIONS.keySet());
-        for(String key: FUNCTIONS.keySet()){
+        Set<String> keys = new HashSet<>(functions.keySet());
+        for(String key: functions.keySet()){
             String lower = key.toLowerCase(Locale.ROOT);
             if(!lower.equals(key)){
                 keys.remove(lower);
@@ -101,7 +101,7 @@ public class Repl implements BiConsumer<Scanner, PrintStream>{
     }
 
     private void removeDigits(){
-        FUNCTIONS.keySet().removeIf((x)-> DIGITS.contains(x.charAt(0)));
-        EXIT_WORDS.removeIf((x)-> DIGITS.contains(x.charAt(0)));
+        functions.keySet().removeIf((x)-> DIGITS.contains(x.charAt(0)));
+        exitWords.removeIf((x)-> DIGITS.contains(x.charAt(0)));
     }
 }

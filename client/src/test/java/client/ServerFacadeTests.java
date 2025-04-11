@@ -1,4 +1,4 @@
-package web;
+package client;
 
 import chess.ChessGame;
 import dataaccess.DataAccessException;
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class ServerFacadeTests {
 
     private static Server server;
-    private static String URL;
+    private static String url;
     private static ServerFacade facade;
 
     @BeforeAll
@@ -28,7 +28,7 @@ public class ServerFacadeTests {
         server = new Server();
         var port = server.run(0);
         System.out.println("Started test HTTP server on " + port);
-        URL = "http://localhost:" + port;
+        url = "http://localhost:" + port;
     }
 
     @AfterAll
@@ -38,7 +38,7 @@ public class ServerFacadeTests {
 
     @BeforeEach
     public void setUp(){
-        facade = new ServerFacade(URL);
+        facade = new ServerFacade(url);
     }
 
     @AfterEach

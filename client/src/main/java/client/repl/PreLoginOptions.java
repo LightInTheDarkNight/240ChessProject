@@ -1,6 +1,6 @@
 package client.repl;
 import model.UserData;
-import web.ResponseException;
+import client.ResponseException;
 
 import java.io.PrintStream;
 import java.util.Scanner;

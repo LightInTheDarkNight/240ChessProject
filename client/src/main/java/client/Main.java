@@ -3,7 +3,6 @@ package client;
 import client.repl.PostLoginOptions;
 import client.repl.PreLoginOptions;
 import client.repl.Repl;
-import web.ServerFacade;
 
 import java.util.Scanner;
 //import static client.repls.EscapeSequences.*;

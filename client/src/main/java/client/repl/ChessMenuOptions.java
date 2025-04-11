@@ -3,8 +3,8 @@ package client.repl;
 import chess.ChessGame;
 import chess.ChessPiece;
 import chess.ChessPosition;
-import web.ResponseException;
-import web.ServerFacade;
+import client.ResponseException;
+import client.ServerFacade;
 
 import java.io.PrintStream;
 import java.util.*;

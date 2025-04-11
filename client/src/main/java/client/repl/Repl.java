@@ -24,11 +24,6 @@ public class Repl implements BiConsumer<Scanner, PrintStream>{
         this(prompt);
         welcomeMessage = welcome;
     }
-//    TODO: public Repl(String stop, String help, String welcome, String prompt){
-//        this(prompt, welcome);
-//        alias(stop, "Exit");
-//        alias(help, "Help");
-//    }
 
     public void accept(Scanner in, PrintStream out){
         out.println(SET_TEXT_COLOR_BLUE + welcomeMessage + RESET_TEXT_COLOR);

@@ -158,6 +158,7 @@ public class WebSocketHandler {
         if(!updateGameOrNotify(data.gameID(), data.game(), username)){
             return;
         }
+
         List<String> allClients = affectedLookup.get(gameID);
         sendToList(allClients, ServerMessage.load(SERIALIZER.toJson(data.game())));
         notifyOthersMove(gameID, username, color, move);

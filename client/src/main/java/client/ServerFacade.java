@@ -7,6 +7,7 @@ import model.AuthData;
 import model.GameData;
 import model.UserData;
 
+import javax.websocket.MessageHandler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -134,5 +135,9 @@ public class ServerFacade {
 
     private boolean isSuccessful(int status) {
         return status / 100 == 2;
+    }
+
+    public WebSocketFacade upgradeConnection(MessageHandler listener) throws Exception{
+        return new WebSocketFacade(serverUrl, listener);
     }
 }

@@ -91,34 +91,6 @@ public class WebSocketHandler {
         notifyList(getOthersAffected(game, username), message);
     }
 
-    private static void notifyList(List<String> toNotify, ServerMessage message) {
-        for(String name: toNotify){
-            try {
-                sendToUser(message, name);
-            } catch (IOException e) {
-                System.err.println("IO Exception??");
-            }
-        }
-    }
-
-    private static void sendToUser(ServerMessage message, String username) throws IOException {
-        Session out = sessionLookup.get(username);
-        if(out.isOpen()){
-            out.getRemote().sendString(SERIALIZER.toJson(message));
-        }
-    }
-
-    private static List<String> getOthersAffected(GameData game, String username) {
-        List<String> toNotify = new ArrayList<>(affectedLookup.getOrDefault(game.gameID(), new ArrayList<>()));
-        toNotify.remove(username);
-        return toNotify;
-    }
-
-    public static void sendLoad(GameData game, String username) throws IOException {
-        ServerMessage message = ServerMessage.load(SERIALIZER.toJson(game.game()));
-        sendToUser(message, username);
-    }
-
     private static void leave(int gameID, String username) throws IOException {
         boolean player = playerGameRetrieval.get(username) != null;
         GameData game;
@@ -156,6 +128,36 @@ public class WebSocketHandler {
         List<String> others = getOthersAffected(game, username);
         notifyList(others, message);
     }
+
+    private static List<String> getOthersAffected(GameData game, String username) {
+        List<String> toNotify = new ArrayList<>(affectedLookup.getOrDefault(game.gameID(), new ArrayList<>()));
+        toNotify.remove(username);
+        return toNotify;
+    }
+
+    private static void notifyList(List<String> toNotify, ServerMessage message) {
+        for(String name: toNotify){
+            try {
+                sendToUser(message, name);
+            } catch (IOException e) {
+                System.err.println("IO Exception??");
+            }
+        }
+    }
+
+    private static void sendToUser(ServerMessage message, String username) throws IOException {
+        Session out = sessionLookup.get(username);
+        if(out.isOpen()){
+            out.getRemote().sendString(SERIALIZER.toJson(message));
+        }
+    }
+
+    public static void sendLoad(GameData game, String username) throws IOException {
+        ServerMessage message = ServerMessage.load(SERIALIZER.toJson(game.game()));
+        sendToUser(message, username);
+    }
+
+
 
 
     

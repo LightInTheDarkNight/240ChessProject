@@ -66,11 +66,14 @@ public class ChessGame {
     private boolean moveCausesCheck(ChessMove move) {
         ChessPosition start = move.getStartPosition();
         ChessPiece piece = board.getPiece(start);
-        if (piece != null && (piece.getPieceType() == ChessPiece.PieceType.KING)) {
+        if (piece == null){
+            return true;
+        }
+        if (piece.getPieceType() == ChessPiece.PieceType.KING) {
             return kingMovedIntoCheck(move);
         }
-        if (piece != null && isInCheck(piece.getTeamColor())) {
-            return moveDoesNotPreventCheck(move);
+        if (isInCheck(piece.getTeamColor())) {
+            return moveDoesNotEndCheck(move);
         }
         Collection<ChessPosition> pinningPieces = pinningPiecePositions(start);
         switch (pinningPieces.size()) {
@@ -85,12 +88,12 @@ public class ChessGame {
                 return !end.equals(pinningPiece)
                         && !Arrays.equals(start.direction(pinningPiece), end.direction(pinningPiece));
             default:
-                return true; // pinned twice; always causes check
+                return true; // pinned twice or more; always causes check
         }
 
     }
 
-    private boolean moveDoesNotPreventCheck(ChessMove move) {
+    private boolean moveDoesNotEndCheck(ChessMove move) {
         ChessPosition start = move.getStartPosition();
         ChessPosition end = move.getEndPosition();
         ChessPiece piece = board.getPiece(start);
@@ -104,9 +107,10 @@ public class ChessGame {
         HashSet<ChessPosition> kingAttackers = getAttackerPositions(attacksOnKing(piece.getTeamColor()));
 
         boolean worthChecking = false;
-        int[] kingEndDirection = kingPosition.direction(end);
+        int[] kingToMoveEndDirection = kingPosition.direction(end);
         for (var attacker : kingAttackers) {
-            if (Arrays.equals(kingEndDirection, kingPosition.direction(attacker))) {
+            // Player currently in check. If the move doesn't kill
+            if (Arrays.equals(kingToMoveEndDirection, kingPosition.direction(attacker))) {
                 worthChecking = true;
             }
         }
@@ -277,10 +281,6 @@ public class ChessGame {
         return !attacksOnKing(teamColor).isEmpty();
     }
 
-    private boolean isPinned(ChessPosition position) {
-        return !pinningPiecePositions(position).isEmpty();
-    }
-
     private static HashSet<ChessPosition> getAttackerPositions(Collection<ChessMove> attacks) {
         HashSet<ChessPosition> positions = new HashSet<>();
         for (ChessMove attack : attacks) {
@@ -307,8 +307,7 @@ public class ChessGame {
         for (var attacker : attackers) {
             potentialKingAttacks.addAll(board.getPiece(attacker).pieceMoves(board, attacker));
         }
-        potentialKingAttacks.removeIf(move -> !board.getKingPosition(color).equals(move.getEndPosition())
-                || isPinned(move.getStartPosition()));
+        potentialKingAttacks.removeIf(move -> !board.getKingPosition(color).equals(move.getEndPosition()));
 
         HashSet<ChessPosition> pinningPieces = getAttackerPositions(potentialKingAttacks);
 
@@ -316,14 +315,8 @@ public class ChessGame {
         return pinningPieces;
     }
 
-    private boolean isPinned(ChessMove move) {
-        return isPinned(move.getStartPosition());
-    }
-
     private Collection<ChessMove> attacksOnKing(TeamColor teamColor) {
-        Collection<ChessMove> toConsider = rawAttacks(board.getKingPosition(teamColor));
-        toConsider.removeIf(this::isPinned);
-        return toConsider;
+        return rawAttacks(board.getKingPosition(teamColor));
     }
 
     /**
@@ -334,15 +327,15 @@ public class ChessGame {
      * filtered for validity.
      */
     private Collection<ChessMove> rawAttacks(ChessPosition position) {
-        ArrayList<ChessMove> attacks = new ArrayList<>();
+
         if (position == null) {
-            return attacks;
+            return new ArrayList<>();
         }
         ChessPiece piece = board.getPiece(position);
         if (piece == null) {
-            return attacks;
+            return new ArrayList<>();
         }
-        attacks = board.getTeamMoves(piece.getTeamColor().other());
+        ArrayList<ChessMove> attacks = board.getTeamMoves(piece.getTeamColor().other());
         attacks.removeIf(move -> !position.equals(move.getEndPosition()));
         return attacks;
     }

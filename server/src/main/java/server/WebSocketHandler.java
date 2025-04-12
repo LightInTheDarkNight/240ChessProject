@@ -33,11 +33,12 @@ public class WebSocketHandler {
     @OnWebSocketMessage
     public void onMessage(Session session, String message) throws Exception {
         UserGameCommand received = SERIALIZER.fromJson(message, UserGameCommand.class);
-        String username = "";
+        String username;
         try {
             username = USER_SERVICE.getUsername(received.authToken());
         } catch (UnauthorizedRequestException e) {
             session.getRemote().sendString(SERIALIZER.toJson(ServerMessage.error("Error: unauthorized.")));
+            return;
         }
         int gameID = received.gameID();
 

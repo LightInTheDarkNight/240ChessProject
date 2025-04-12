@@ -13,6 +13,7 @@ public class ChessGame {
     private TeamColor currentTurn = TeamColor.WHITE;
     private ChessBoard board = ChessBoard.newGameBoard();
     private final ArrayList<ChessPiece> enPassantOn = new ArrayList<>();
+    private GameStatus winner = GameStatus.PENDING;
 
     public ChessGame() {
     }
@@ -174,7 +175,11 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         var moveOptions = validMoves(move.getStartPosition());
-        if (moveOptions == null || !moveOptions.contains(move) || currentTurn != piece.getTeamColor()) {
+        boolean invalid = moveOptions == null
+                       || !moveOptions.contains(move)
+                       || currentTurn != piece.getTeamColor()
+                       || winner != GameStatus.PENDING;
+        if (invalid) {
             throw new InvalidMoveException("Invalid move: " + move);
         }
         resetEnPassant();
@@ -190,6 +195,9 @@ public class ChessGame {
         currentTurn = currentTurn.other();
     }
 
+    public void resign(TeamColor side){
+        winner = GameStatus.getWin(side.other());
+    }
 
     private void castle(ChessMove castle) {
 
@@ -347,11 +355,14 @@ public class ChessGame {
      * @return True if the specified team is in checkmate
      */
     public boolean isInCheckmate(TeamColor teamColor) {
-
         if (!isInCheck(teamColor)) {
             return false;
         }
-        return allValidMoves(teamColor).isEmpty();
+        if(allValidMoves(teamColor).isEmpty()){
+            winner = GameStatus.getWin(teamColor.other());
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -365,7 +376,11 @@ public class ChessGame {
         if (isInCheck(teamColor)) {
             return false;
         }
-        return allValidMoves(teamColor).isEmpty();
+        if(allValidMoves(teamColor).isEmpty()){
+            winner = GameStatus.getWin(null);
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -422,6 +437,17 @@ public class ChessGame {
 
         public String abbreviation() {
             return this.toString().substring(0, 1);
+        }
+    }
+
+    public enum GameStatus {
+        WHITE_WON, BLACK_WON, STALEMATE, PENDING;
+        public static GameStatus getWin(TeamColor color){
+            return switch(color){
+                case BLACK -> BLACK_WON;
+                case WHITE -> WHITE_WON;
+                case null -> STALEMATE;
+            };
         }
     }
 

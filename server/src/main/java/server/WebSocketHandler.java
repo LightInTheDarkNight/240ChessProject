@@ -1,6 +1,7 @@
 package server;
 
 import chess.ChessGame;
+import chess.ChessMove;
 import com.google.gson.Gson;
 import dataaccess.DataAccessException;
 import model.GameData;
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static server.Server.GAME_SERVICE;
 import static server.Server.USER_SERVICE;
 import static server.WebException.*;
+import static chess.ChessGame.TeamColor;
 
 public class WebSocketHandler {
     private static final Gson SERIALIZER = new Gson();
@@ -39,70 +41,47 @@ public class WebSocketHandler {
         int gameID = received.gameID();
 
         switch(received.commandType()){
-            case CONNECT:
-                connect(session, username, gameID);
-                break;
-            case LEAVE:
-                leave(gameID, username);
-                break;
-            case RESIGN:
-                break;
-            case MAKE_MOVE:
-                break;
-            case null, default:
-                throw new BadRequestException();
+            case CONNECT -> connect(session, username, gameID);
+            case LEAVE -> leave(gameID, username);
+            case RESIGN -> resign(gameID, username);
+            case MAKE_MOVE -> {
+
+            }
+            case null, default -> throw new BadRequestException();
         }
     }
 
     private static void connect(Session session, String username, int gameID) throws IOException {
         sessionLookup.put(username, session);
-        GameData game;
-        try{
-            game = GAME_SERVICE.getGame(gameID);
-        } catch (DataAccessException e) {
-            sendToUser(ServerMessage.error("Error: could not load game data."), username);
+        GameData game = getGameOrNotify(gameID, username);
+        if(game == null){
             return;
         }
         affectedLookup.putIfAbsent(gameID, new ArrayList<>());
         affectedLookup.get(gameID).add(username);
-        ChessGame.TeamColor color = null;
-        String otherPlayer = "";
-        
-        if(username.equals(game.blackUsername())) {
-            color = ChessGame.TeamColor.BLACK;
-            otherPlayer = game.whiteUsername();
-        }
-        else if (username.equals(game.whiteUsername())) {
-            color = ChessGame.TeamColor.WHITE;
-            otherPlayer = game.blackUsername();
-        }
-        boolean player = !otherPlayer.isEmpty();
+        TeamColor color = getColor(username, game);
 
-        if(player) {
+        if(color != null) {
             playerGameRetrieval.put(username, game);
             sendLoad(game, username);
         }
-        notifyOthersJoin(game, player, username, color);
+        notifyOthersJoin(game, username, color);
     }
 
-    public static void notifyOthersJoin(GameData game, boolean player, String username, ChessGame.TeamColor color) {
+    public static void notifyOthersJoin(GameData game, String username, TeamColor color) {
         ServerMessage message = ServerMessage.notification(username + " has joined the game as " +
-                (player ? "the " + color + " player." : "an observer."));
+                (color != null ? "the " + color + " player." : "an observer."));
         notifyList(getOthersAffected(game, username), message);
     }
 
+
     private static void leave(int gameID, String username) throws IOException {
-        boolean player = playerGameRetrieval.get(username) != null;
-        GameData game;
-        try{
-            game = GAME_SERVICE.getGame(gameID);
-        } catch (DataAccessException e) {
-            sendToUser(ServerMessage.error("Error: could not load game data."), username);
+        GameData game = getGameOrNotify(gameID, username);
+        if(game == null){
             return;
         }
-        ChessGame.TeamColor color = null;
-        if(player){
-            color = username.equals(game.whiteUsername())? ChessGame.TeamColor.WHITE : ChessGame.TeamColor.BLACK;
+        TeamColor color = getColor(username, game);
+        if(color!=null){
             try{
                 GAME_SERVICE.leaveGame(gameID, color);
             } catch (DataAccessException e) {
@@ -113,7 +92,7 @@ public class WebSocketHandler {
                 return;
             }
         }
-        notifyOthersLeave(game, player, username, color);
+        notifyOthersLeave(game, username, color);
         ServerMessage leaveMessage = ServerMessage.notification("You left the game.");
         sendToUser(leaveMessage, username);
         affectedLookup.get(gameID).remove(username);
@@ -122,12 +101,76 @@ public class WebSocketHandler {
         remove.close();
     }
 
-    private static void notifyOthersLeave(GameData game, boolean player, String username, ChessGame.TeamColor color) {
-        ServerMessage message = ServerMessage.notification((player ? "The " + color + " player " : "The observer ") +
-                username + " has left the game.");
+    private static TeamColor getColor(String username, GameData game) {
+        return username.equals(game.whiteUsername()) ? TeamColor.WHITE :
+                username.equals(game.blackUsername()) ? TeamColor.BLACK : null;
+    }
+
+    private static void notifyOthersLeave(GameData game, String username, TeamColor color) {
+        ServerMessage message = ServerMessage.notification(
+                (color != null ? "The " + color + " player " : "The observer ") + username + " has left the game.");
+        notifyList(getOthersAffected(game, username), message);
+    }
+
+    private static GameData getGameOrNotify(int gameID, String username) throws IOException {
+        try{
+            return GAME_SERVICE.getGame(gameID);
+        } catch (DataAccessException e) {
+            sendToUser(ServerMessage.error("Error: could not load game data."), username);
+            return null;
+        }
+    }
+
+    private static void resign(int gameID, String username) throws IOException {
+        GameData game = getGameOrNotify(gameID, username);
+        if(game == null){
+            return;
+        }
+        TeamColor color = getColor(username, game);
+        if(color == null){
+            sendToUser(ServerMessage.error("Error: you can't resign from a game you aren't playing."),
+                    username);
+            return;
+        }
+        if(!resignGameOrNotify(game, username, color)){
+            return;
+        }
+        notifyOthersResign(game, username, color);
+        sendToUser(ServerMessage.notification("You resigned the game."), username);
+    }
+
+    private static void notifyOthersResign(GameData game, String username, TeamColor color) {
+        ServerMessage message = ServerMessage.notification("The " + color + " player " + username + " has resigned.");
         List<String> others = getOthersAffected(game, username);
         notifyList(others, message);
     }
+
+    private static boolean resignGameOrNotify(GameData game, String username, TeamColor side) throws IOException {
+        game.game().resign(side);
+        return updateGameOrNotify(game.gameID(), game.game(), username);
+    }
+
+    private static void makeMove(int gameID, String username, ChessMove move) throws IOException {
+        GameData data = getGameOrNotify(gameID, username);
+        if(data == null){
+            return;
+        }
+
+
+    }
+
+    private static TeamColor getColorOrNotify(String username, GameData game){return null;}
+
+
+    private static boolean updateGameOrNotify(int gameID, ChessGame game, String username) throws IOException {
+        try{
+            return GAME_SERVICE.updateGame(gameID, game);
+        } catch (DataAccessException e) {
+            sendToUser(ServerMessage.error("Error: could not update game data."), username);
+            return false;
+        }
+    }
+
 
     private static List<String> getOthersAffected(GameData game, String username) {
         List<String> toNotify = new ArrayList<>(affectedLookup.getOrDefault(game.gameID(), new ArrayList<>()));

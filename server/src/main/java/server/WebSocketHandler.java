@@ -28,6 +28,7 @@ public class WebSocketHandler {
     private static final Gson SERIALIZER = new Gson();
     private static final Map<String, Session> sessionLookup = new ConcurrentHashMap<>();
     private static final Map<Integer, List<String>> affectedLookup = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> userToCurrentGameLookup = new ConcurrentHashMap<>();
 
 
     @OnWebSocketMessage
@@ -53,6 +54,13 @@ public class WebSocketHandler {
 
     private static void connect(Session session, String username, int gameID) throws IOException {
         sessionLookup.put(username, session);
+        Integer old = userToCurrentGameLookup.put(username, gameID);
+        if(old != null){
+            var oldTwo = affectedLookup.get(old);
+            if(oldTwo != null){
+                oldTwo.remove(username);
+            }
+        }
         GameData game = getGameOrNotify(gameID, username);
         if(game == null){
             return;
@@ -89,10 +97,10 @@ public class WebSocketHandler {
             }
         }
         notifyOthersLeave(gameID, username, color);
-        ServerMessage leaveMessage = ServerMessage.notification("You left the game.");
-        sendToUser(leaveMessage, username);
+//        sendToUser(ServerMessage.notification("You left the game."), username);
         affectedLookup.get(gameID).remove(username);
         sessionLookup.remove(username).close();
+        userToCurrentGameLookup.remove(username);
     }
 
     private static TeamColor getColor(String username, GameData game) {
@@ -108,7 +116,11 @@ public class WebSocketHandler {
 
     private static GameData getGameOrNotify(int gameID, String username) throws IOException {
         try{
-            return GAME_SERVICE.getGame(gameID);
+            GameData data = GAME_SERVICE.getGame(gameID);
+            if(data == null){
+                sendToUser(ServerMessage.error("Error: no game with that ID in database."), username);
+            }
+            return data;
         } catch (DataAccessException e) {
             sendToUser(ServerMessage.error("Error: could not load game data."), username);
             return null;
@@ -127,17 +139,19 @@ public class WebSocketHandler {
         if(!resignGameOrNotify(game, username, color)){
             return;
         }
-        notifyOthersResign(gameID, username, color);
-        sendToUser(ServerMessage.notification("You resigned the game."), username);
-    }
 
-    private static void notifyOthersResign(int gameID, String username, TeamColor color) {
-        ServerMessage message = ServerMessage.notification("The " + color + " player " + username + " has resigned.");
-        sendToList(getOthersAffected(gameID, username), message);
+        sendToList(affectedLookup.get(gameID), ServerMessage.notification(
+                "The " + color + " player, " + username + ", has resigned."));
+
     }
 
     private static boolean resignGameOrNotify(GameData game, String username, TeamColor side) throws IOException {
-        game.game().resign(side);
+        try {
+            game.game().resign(side);
+        } catch (InvalidMoveException e) {
+            sendToUser(ServerMessage.error("Error: Cannot resign after game is over."), username);
+            return false;
+        }
         return updateGameOrNotify(game.gameID(), game.game(), username);
     }
 
@@ -148,6 +162,10 @@ public class WebSocketHandler {
         }
         TeamColor color = getColorOrNotify(username, data);
         if(color == null){
+            return;
+        }
+        if(data.game().getTeamTurn() != color){
+            sendToUser(ServerMessage.error("Error: cannot move for opponent."), username);
             return;
         }
         try {

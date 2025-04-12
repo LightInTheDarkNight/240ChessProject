@@ -203,7 +203,10 @@ public class ChessGame {
         }
     }
 
-    public void resign(TeamColor side){
+    public void resign(TeamColor side) throws InvalidMoveException {
+        if(status == GameStatus.WHITE_WON || status == GameStatus.BLACK_WON || status == GameStatus.STALEMATE){
+            throw new InvalidMoveException("Cannot resign after the game is over.");
+        }
         status = GameStatus.getWin(side.other());
     }
 

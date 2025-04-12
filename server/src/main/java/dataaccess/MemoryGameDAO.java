@@ -2,19 +2,19 @@ package dataaccess;
 
 import chess.ChessGame;
 import model.GameData;
-import server.Server.AlreadyTakenException;
+import static server.WebException.*;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MemoryGameDAO implements GameDAO {
-    private final HashMap<Integer, GameData> gameDataList = new HashMap<>();
+    private final ConcurrentHashMap<Integer, GameData> gameDataList = new ConcurrentHashMap<>();
     private static int nextGameID = 1;
 
     @Override
     public boolean clear() {
         gameDataList.clear();
-        return gameDataList.isEmpty();
+        return true;
     }
 
     @Override
@@ -62,16 +62,35 @@ public class MemoryGameDAO implements GameDAO {
             case WHITE -> game.whiteUsername();
             case BLACK -> game.blackUsername();
         };
-        if (old != null) {
+        if (old != null && newUsername != null) {
             throw new AlreadyTakenException();
+        }
+        if (newUsername == null && old == null){
+            throw new RuntimeException("No player to leave the game.");
         }
         switch (color) {
             case WHITE -> gameDataList.put(game.gameID(), game.setWhitePlayer(newUsername));
             case BLACK -> gameDataList.put(game.gameID(), game.setBlackPlayer(newUsername));
         }
+        String updated;
         return switch (color) {
-            case WHITE -> gameDataList.get(gameID).whiteUsername().equals(newUsername);
-            case BLACK -> gameDataList.get(gameID).blackUsername().equals(newUsername);
+            case WHITE:
+                updated = gameDataList.get(gameID).whiteUsername();
+                yield updated == null || updated.equals(newUsername);
+            case BLACK:
+                updated = gameDataList.get(gameID).blackUsername();
+                yield updated == null || updated.equals(newUsername);
         };
+    }
+
+    @Override
+    public boolean updateGame(Integer gameID, ChessGame game) {
+        GameData old = gameDataList.get(gameID);
+        if (old == null) {
+            throw new RuntimeException("Game not in database.");
+        }
+        GameData newData = new GameData(gameID, old.whiteUsername(), old.blackUsername(), old.gameName(), game);
+        gameDataList.put(gameID, newData);
+        return newData.equals(gameDataList.get(gameID));
     }
 }

@@ -6,6 +6,7 @@ import chess.ChessPosition;
 import client.ResponseException;
 import client.ServerFacade;
 
+import javax.websocket.Session;
 import java.io.PrintStream;
 import java.util.*;
 
@@ -17,6 +18,7 @@ public class ChessMenuOptions {
     protected static String authToken = "";
     protected static ChessGame currentGame = null;
     protected static ChessGame.TeamColor perspective = null;
+    protected static Session serverSession = null;
     protected static final String WHITE_SQUARE_COLOR = SET_BG_COLOR_LIGHT_GREY;
     protected static final String BLACK_SQUARE_COLOR = SET_BG_COLOR_DARK_GREY;
     protected static final String WHITE_PIECE_COLOR = SET_TEXT_COLOR_WHITE;
@@ -24,6 +26,13 @@ public class ChessMenuOptions {
 
     public static void setFacade(ServerFacade server){
         facade = server;
+    }
+
+    protected static void checkFacade(String function){
+        if(facade == null){
+            throw new RuntimeException(
+                    "Error: Static server facade variable not set before " + function + " method called");
+        }
     }
 
     protected static String getField(Scanner in, PrintStream out, String fieldName){
@@ -110,11 +119,20 @@ public class ChessMenuOptions {
         }while(true);
     }
 
-    protected static void checkFacade(String function){
-        if(facade == null){
-            throw new RuntimeException(
-                    "Error: Static server facade variable not set before " + function + " method called");
+    protected static void prompt(PrintStream out, String fieldName){
+        out.print(SET_TEXT_COLOR_BLUE + "Please enter " + fieldName + ": \n" + "[" + fieldName + "] >>> " +
+                RESET_TEXT_COLOR);
+    }
+
+    protected static void handleError(PrintStream out, ResponseException e, String taken){
+        out.print(SET_TEXT_COLOR_RED);
+        switch(e.getStatusCode()){
+            case 400 -> out.println("Sorry, somehow invalid input was sent to the server. Please try again.");
+            case 401 -> out.println("Invalid username or password. Please try again.");
+            case 403 -> out.println("Sorry, someone " + taken + " Please try again.");
+            default -> out.print("Sorry, a server error occurred. Please try again.");
         }
+        out.print(RESET_TEXT_COLOR);
     }
 
     protected static void drawBoard(PrintStream out){
@@ -226,19 +244,4 @@ public class ChessMenuOptions {
                 "If you want to cancel the operation, please type '-1'." + RESET_TEXT_COLOR);
     }
 
-    protected static void prompt(PrintStream out, String fieldName){
-        out.print(SET_TEXT_COLOR_BLUE + "Please enter " + fieldName + ": \n" + "[" + fieldName + "] >>> " +
-                RESET_TEXT_COLOR);
-    }
-
-    protected static void handleError(PrintStream out, ResponseException e, String taken){
-        out.print(SET_TEXT_COLOR_RED);
-        switch(e.getStatusCode()){
-            case 400 -> out.println("Sorry, somehow invalid input was sent to the server. Please try again.");
-            case 401 -> out.println("Invalid username or password. Please try again.");
-            case 403 -> out.println("Sorry, someone " + taken + " Please try again.");
-            default -> out.print("Sorry, a server error occurred. Please try again.");
-        }
-        out.print(RESET_TEXT_COLOR);
-    }
 }

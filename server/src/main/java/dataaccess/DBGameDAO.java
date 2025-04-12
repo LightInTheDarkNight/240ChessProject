@@ -3,7 +3,7 @@ package dataaccess;
 import chess.ChessGame;
 import com.google.gson.Gson;
 import model.GameData;
-import server.Server.AlreadyTakenException;
+import static server.WebException.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -162,18 +162,39 @@ public class DBGameDAO implements GameDAO {
                 case BLACK -> "black_username";
             };
             var queryStatement = conn.prepareStatement("SELECT " + columnName + " FROM game_data WHERE gameid=?");
-            var updateStatement = conn.prepareStatement("UPDATE game_data SET " + columnName + "=? WHERE gameid=?");
             queryStatement.setInt(1, gameID);
 
             var results = queryStatement.executeQuery();
             if (!results.next()) {
                 throw new RuntimeException("Game not in database");
             }
-            if (results.getString(1) != null) {
+            String old = results.getString(1);
+            if (old != null && newUsername != null) {
                 throw new AlreadyTakenException();
             }
+            if (newUsername == null && old == null){
+                throw new RuntimeException("No player at username to leave game.");
+            }
 
+
+            var updateStatement = conn.prepareStatement("UPDATE game_data SET " + columnName + "=? WHERE gameid=?");
             updateStatement.setString(1, newUsername);
+            updateStatement.setInt(2, gameID);
+
+            updateStatement.executeUpdate();
+
+            return true;
+        } catch (SQLException e) {
+            throw new DataAccessException("Error: game database select failed");
+        }
+    }
+
+    @Override
+    public boolean updateGame(Integer gameID, ChessGame game) throws DataAccessException{
+        try (Connection conn = DatabaseManager.getConnection()) {
+
+            var updateStatement = conn.prepareStatement("UPDATE game_data SET game=? WHERE gameid=?");
+            updateStatement.setString(1, SERIALIZER.toJson(game));
             updateStatement.setInt(2, gameID);
 
             updateStatement.executeUpdate();

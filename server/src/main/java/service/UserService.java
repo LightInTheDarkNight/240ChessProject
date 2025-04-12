@@ -6,8 +6,7 @@ import dataaccess.UserDAO;
 import model.AuthData;
 import model.UserData;
 import org.mindrot.jbcrypt.BCrypt;
-import server.Server.AlreadyTakenException;
-import server.Server.UnauthorizedRequestException;
+import static server.WebException.*;
 
 import java.util.UUID;
 

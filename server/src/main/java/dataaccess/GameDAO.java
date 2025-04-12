@@ -2,7 +2,7 @@ package dataaccess;
 
 import chess.ChessGame;
 import model.GameData;
-import server.Server.AlreadyTakenException;
+import static server.WebException.*;
 
 import java.util.Collection;
 
@@ -38,4 +38,6 @@ public interface GameDAO extends DAO<GameData, Integer> {
      */
     boolean updateUsername(Integer gameID, ChessGame.TeamColor color, String newUsername)
             throws AlreadyTakenException, DataAccessException;
+
+    boolean updateGame(Integer gameID, ChessGame game) throws DataAccessException;
 }

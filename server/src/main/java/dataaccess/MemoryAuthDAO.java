@@ -2,15 +2,15 @@ package dataaccess;
 
 import model.AuthData;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MemoryAuthDAO implements AuthDAO {
-    private final HashMap<String, AuthData> authDataList = new HashMap<>();
+    private final ConcurrentHashMap<String, AuthData> authDataList = new ConcurrentHashMap<>();
 
     @Override
     public boolean clear() {
         authDataList.clear();
-        return authDataList.isEmpty();
+        return true;
     }
 
     @Override

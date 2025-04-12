@@ -5,10 +5,9 @@ import client.repl.PreLoginOptions;
 import client.repl.Repl;
 
 import java.util.Scanner;
-//import static client.repls.EscapeSequences.*;
+//import static client.repl.EscapeSequences.*;
 
 public class Main {
-    //private String authToken;
     public static void main(String[] args) {
         var facade = new ServerFacade("http://localhost:8080");
         PreLoginOptions.setFacade(facade);

@@ -4,7 +4,7 @@ import dataaccess.*;
 import model.UserData;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import server.Server;
+import static server.WebException.*;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,7 +29,7 @@ class UserServiceTest {
     }
 
     @Test
-    void registerTest() throws Exception {
+    void registerTest() {
         for(int i = 0; i < 8; i ++){
             assert AUTH_TOKENS[i] != null;
         }
@@ -39,9 +39,8 @@ class UserServiceTest {
     void registerTestThrows() {
         for(int i = 0; i < 8; i ++){
             int a = i;
-            assertThrows(Server.AlreadyTakenException.class, () -> {
-                SERVICE.register(new UserData(USERNAMES[a], PASSWORDS[a], EMAILS[a]));
-            });
+            assertThrows(AlreadyTakenException.class, () ->
+                    SERVICE.register(new UserData(USERNAMES[a], PASSWORDS[a], EMAILS[a])));
         }
     }
 
@@ -57,9 +56,7 @@ class UserServiceTest {
 
     @Test
     void authenticateTestThrows() {
-        assertThrows(Server.UnauthorizedRequestException.class, ()->{
-            SERVICE.authenticate("NOT_AN_AUTH_TOKEN");
-        });
+        assertThrows(UnauthorizedRequestException.class, ()-> SERVICE.authenticate("NOT_AN_AUTH_TOKEN"));
     }
 
     @Test
@@ -73,22 +70,18 @@ class UserServiceTest {
     }
     @Test
     void getUsernameTestThrows() {
-        assertThrows(Server.UnauthorizedRequestException.class, ()->{
-            SERVICE.authenticate("NOT_AN_AUTH_TOKEN");
-        });
+        assertThrows(UnauthorizedRequestException.class, ()-> SERVICE.authenticate("NOT_AN_AUTH_TOKEN"));
     }
 
     @Test
     void loginTestFailsUnregistered() {
-        assertThrows(Server.UnauthorizedRequestException.class, ()->{
-            SERVICE.login(new UserData("BOB_ISN'T_REGISTERED", "NOT_A_PASSWORD", null));
-        });
+        assertThrows(UnauthorizedRequestException.class, ()->
+                SERVICE.login(new UserData("BOB_ISN'T_REGISTERED", "NOT_A_PASSWORD", null)) );
     }
     @Test
     void loginTestFailsWrongPassword() {
-        assertThrows(Server.UnauthorizedRequestException.class, ()->{
-            SERVICE.login(new UserData("Johnathan", "NOT_A_PASSWORD", null));
-        });
+        assertThrows(UnauthorizedRequestException.class, ()->
+                SERVICE.login(new UserData("Johnathan", "NOT_A_PASSWORD", null)));
     }
     @Test
     void loginTestSuccess() throws Exception{
@@ -110,9 +103,7 @@ class UserServiceTest {
         AUTH_LIST.clear();
         for(int i = 0; i < 8; i ++){
             int a = i;
-            assertThrows(Server.UnauthorizedRequestException.class, ()->{
-                SERVICE.logout(AUTH_TOKENS[a]);
-            });
+            assertThrows(UnauthorizedRequestException.class, ()-> SERVICE.logout(AUTH_TOKENS[a]));
         }
     }
 }

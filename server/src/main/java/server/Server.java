@@ -13,14 +13,15 @@ import spark.Spark;
 
 import java.util.Map;
 
+import static server.WebException.*;
 import static service.GameService.CreateGameRequest;
 import static service.GameService.JoinGameRequest;
 
 public class Server {
 
-    private static final ClearService CLEAR_SERVICE;
-    private static final UserService USER_SERVICE;
-    private static final GameService GAME_SERVICE;
+    static final ClearService CLEAR_SERVICE;
+    static final UserService USER_SERVICE;
+    static final GameService GAME_SERVICE;
 
     static {
         UserDAO userDAO = new DBUserDAO();
@@ -46,6 +47,8 @@ public class Server {
         //This line initializes the server and can be removed once you have a functioning endpoint
         Spark.exception(WebException.class, this::errorHandler);
         Spark.exception(Exception.class, this::errorHandler);
+
+        Spark.webSocket("/ws", WebSocketHandler.class);
 
         Spark.post("/user", Server::registerHandler);
         Spark.post("/session", Server::loginHandler);
@@ -154,48 +157,6 @@ public class Server {
     }
 
 
-    public static class WebException extends Exception {
-        public int getStatusCode() {
-            return 500;
-        }
 
-        WebException(String message) {
-            super(message);
-        }
-
-        public WebException(Exception e) {
-            super(e.getMessage());
-        }
-    }
-
-    public static class UnauthorizedRequestException extends WebException {
-        public int getStatusCode() {
-            return 401;
-        }
-
-        public UnauthorizedRequestException() {
-            super("Error: unauthorized");
-        }
-    }
-
-    public static class AlreadyTakenException extends WebException {
-        public int getStatusCode() {
-            return 403;
-        }
-
-        public AlreadyTakenException() {
-            super("Error: already taken");
-        }
-    }
-
-    private static class BadRequestException extends WebException {
-        public int getStatusCode() {
-            return 400;
-        }
-
-        public BadRequestException() {
-            super("Error: bad request");
-        }
-    }
 
 }

@@ -5,7 +5,7 @@ import chess.ChessGame.TeamColor;
 import dataaccess.DataAccessException;
 import dataaccess.GameDAO;
 import model.GameData;
-import server.Server.AlreadyTakenException;
+import static server.WebException.*;
 
 import java.util.Collection;
 
@@ -47,5 +47,13 @@ public class GameService {
 
     public Collection<GameData> listGames() throws DataAccessException {
         return games.getGameList();
+    }
+
+    public boolean updateGame(Integer gameID, ChessGame game) throws DataAccessException {
+        return games.updateGame(gameID, game);
+    }
+
+    public boolean leaveGame(int gameID, TeamColor color) throws AlreadyTakenException, DataAccessException {
+        return games.updateUsername(gameID, color, null);
     }
 }

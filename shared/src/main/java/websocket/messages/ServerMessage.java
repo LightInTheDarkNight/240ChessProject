@@ -6,7 +6,7 @@ package websocket.messages;
  * Note: You can add to this class, but you should not alter the existing
  * methods.
  */
-public record ServerMessage(ServerMessageType serverMessageType, String message, String error, String game) {
+public record ServerMessage(ServerMessageType serverMessageType, String message, String errorMessage, String game) {
     public enum ServerMessageType {
         LOAD_GAME,
         ERROR,

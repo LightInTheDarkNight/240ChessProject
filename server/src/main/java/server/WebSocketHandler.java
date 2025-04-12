@@ -2,17 +2,18 @@ package server;
 
 import chess.ChessGame;
 import chess.ChessMove;
+import chess.InvalidMoveException;
 import com.google.gson.Gson;
 import dataaccess.DataAccessException;
 import model.GameData;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import websocket.commands.UserGameCommand;
 import websocket.messages.ServerMessage;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,15 +23,15 @@ import static server.Server.USER_SERVICE;
 import static server.WebException.*;
 import static chess.ChessGame.TeamColor;
 
+@WebSocket
 public class WebSocketHandler {
     private static final Gson SERIALIZER = new Gson();
-    private static final Map<String, GameData> playerGameRetrieval = new ConcurrentHashMap<>();
     private static final Map<String, Session> sessionLookup = new ConcurrentHashMap<>();
-    private static final Map<Integer, List<String>> affectedLookup = new HashMap<>();
+    private static final Map<Integer, List<String>> affectedLookup = new ConcurrentHashMap<>();
 
 
     @OnWebSocketMessage
-    public static void onMessage(Session session, String message) throws Exception {
+    public void onMessage(Session session, String message) throws Exception {
         UserGameCommand received = SERIALIZER.fromJson(message, UserGameCommand.class);
         String username = "";
         try {
@@ -44,9 +45,7 @@ public class WebSocketHandler {
             case CONNECT -> connect(session, username, gameID);
             case LEAVE -> leave(gameID, username);
             case RESIGN -> resign(gameID, username);
-            case MAKE_MOVE -> {
-
-            }
+            case MAKE_MOVE -> makeMove(gameID, username, received.move());
             case null, default -> throw new BadRequestException();
         }
     }
@@ -60,18 +59,14 @@ public class WebSocketHandler {
         affectedLookup.putIfAbsent(gameID, new ArrayList<>());
         affectedLookup.get(gameID).add(username);
         TeamColor color = getColor(username, game);
-
-        if(color != null) {
-            playerGameRetrieval.put(username, game);
-            sendLoad(game, username);
-        }
-        notifyOthersJoin(game, username, color);
+        sendToUser(ServerMessage.load(SERIALIZER.toJson(game.game())), username);
+        notifyOthersJoin(gameID, username, color);
     }
 
-    public static void notifyOthersJoin(GameData game, String username, TeamColor color) {
+    public static void notifyOthersJoin(int gameID, String username, TeamColor color) {
         ServerMessage message = ServerMessage.notification(username + " has joined the game as " +
                 (color != null ? "the " + color + " player." : "an observer."));
-        notifyList(getOthersAffected(game, username), message);
+        sendToList(getOthersAffected(gameID, username), message);
     }
 
 
@@ -92,13 +87,11 @@ public class WebSocketHandler {
                 return;
             }
         }
-        notifyOthersLeave(game, username, color);
+        notifyOthersLeave(gameID, username, color);
         ServerMessage leaveMessage = ServerMessage.notification("You left the game.");
         sendToUser(leaveMessage, username);
         affectedLookup.get(gameID).remove(username);
-        playerGameRetrieval.remove(username);
-        Session remove = sessionLookup.remove(username);
-        remove.close();
+        sessionLookup.remove(username).close();
     }
 
     private static TeamColor getColor(String username, GameData game) {
@@ -106,10 +99,10 @@ public class WebSocketHandler {
                 username.equals(game.blackUsername()) ? TeamColor.BLACK : null;
     }
 
-    private static void notifyOthersLeave(GameData game, String username, TeamColor color) {
+    private static void notifyOthersLeave(int gameID, String username, TeamColor color) {
         ServerMessage message = ServerMessage.notification(
                 (color != null ? "The " + color + " player " : "The observer ") + username + " has left the game.");
-        notifyList(getOthersAffected(game, username), message);
+        sendToList(getOthersAffected(gameID, username), message);
     }
 
     private static GameData getGameOrNotify(int gameID, String username) throws IOException {
@@ -126,23 +119,20 @@ public class WebSocketHandler {
         if(game == null){
             return;
         }
-        TeamColor color = getColor(username, game);
+        TeamColor color = getColorOrNotify(username, game);
         if(color == null){
-            sendToUser(ServerMessage.error("Error: you can't resign from a game you aren't playing."),
-                    username);
             return;
         }
         if(!resignGameOrNotify(game, username, color)){
             return;
         }
-        notifyOthersResign(game, username, color);
+        notifyOthersResign(gameID, username, color);
         sendToUser(ServerMessage.notification("You resigned the game."), username);
     }
 
-    private static void notifyOthersResign(GameData game, String username, TeamColor color) {
+    private static void notifyOthersResign(int gameID, String username, TeamColor color) {
         ServerMessage message = ServerMessage.notification("The " + color + " player " + username + " has resigned.");
-        List<String> others = getOthersAffected(game, username);
-        notifyList(others, message);
+        sendToList(getOthersAffected(gameID, username), message);
     }
 
     private static boolean resignGameOrNotify(GameData game, String username, TeamColor side) throws IOException {
@@ -155,11 +145,44 @@ public class WebSocketHandler {
         if(data == null){
             return;
         }
+        TeamColor color = getColorOrNotify(username, data);
+        if(color == null){
+            return;
+        }
+        try {
+            data.game().makeMove(move);
+        } catch (InvalidMoveException e) {
+            sendToUser(ServerMessage.error("Error: invalid move."), username);
+            return;
+        }
+        if(!updateGameOrNotify(data.gameID(), data.game(), username)){
+            return;
+        }
+        List<String> allClients = affectedLookup.get(gameID);
+        sendToList(allClients, ServerMessage.load(SERIALIZER.toJson(data.game())));
+        notifyOthersMove(gameID, username, color, move);
 
-
+        var status = data.game().getStatus();
+        String checkmate = "### Checkmate! ###";
+        String check = "+++ Check +++";
+        switch(status){
+            case WHITE_WON, BLACK_WON -> sendToList(allClients, ServerMessage.notification(checkmate));
+            case WHITE_IN_CHECK, BLACK_IN_CHECK -> sendToList(allClients, ServerMessage.notification(check));
+        }
     }
 
-    private static TeamColor getColorOrNotify(String username, GameData game){return null;}
+    private static void notifyOthersMove(int gameID, String username, TeamColor color, ChessMove move) {
+        ServerMessage message = ServerMessage.notification(username + " (" + color + ") made the move " + move);
+        sendToList(getOthersAffected(gameID, username), message);
+    }
+
+    private static TeamColor getColorOrNotify(String username, GameData game) throws IOException {
+        TeamColor color = getColor(username, game);
+        if(color == null){
+            sendToUser(ServerMessage.error("Error: you aren't playing this game."), username);
+        }
+        return color;
+    }
 
 
     private static boolean updateGameOrNotify(int gameID, ChessGame game, String username) throws IOException {
@@ -172,13 +195,13 @@ public class WebSocketHandler {
     }
 
 
-    private static List<String> getOthersAffected(GameData game, String username) {
-        List<String> toNotify = new ArrayList<>(affectedLookup.getOrDefault(game.gameID(), new ArrayList<>()));
+    private static List<String> getOthersAffected(int gameID, String username) {
+        List<String> toNotify = new ArrayList<>(affectedLookup.getOrDefault(gameID, new ArrayList<>()));
         toNotify.remove(username);
         return toNotify;
     }
 
-    private static void notifyList(List<String> toNotify, ServerMessage message) {
+    private static void sendToList(List<String> toNotify, ServerMessage message) {
         for(String name: toNotify){
             try {
                 sendToUser(message, name);
@@ -195,13 +218,4 @@ public class WebSocketHandler {
         }
     }
 
-    public static void sendLoad(GameData game, String username) throws IOException {
-        ServerMessage message = ServerMessage.load(SERIALIZER.toJson(game.game()));
-        sendToUser(message, username);
-    }
-
-
-
-
-    
 }

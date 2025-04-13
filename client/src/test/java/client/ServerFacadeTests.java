@@ -279,25 +279,4 @@ public class ServerFacadeTests {
             assert username.equals(color == ChessGame.TeamColor.WHITE? game.whiteUsername() : game.blackUsername());
         });
     }
-
-    @Test
-    public void observeGameSuccess(){
-        UserData user = new UserData("John Lock", "Rousseau", "you thought");
-        assertDoesNotThrow(() -> {
-            String token = facade.register(user).authToken();
-            int gameID = facade.createGame(token, "TestGame");
-            facade.observeGame(token, ChessGame.TeamColor.BLACK, gameID);
-        });
-    }
-
-    @Test
-    public void observeGameThrows(){
-        UserData user = new UserData("John Lock", "Rousseau", "you thought");
-        assertDoesNotThrow(() -> {
-            String token = facade.register(user).authToken();
-            facade.createGame(token, "TestGame");
-            assertThrows(ResponseException.class,
-                    () -> facade.observeGame(token, ChessGame.TeamColor.BLACK, -1));
-        });
-    }
 }

@@ -4,6 +4,7 @@ import chess.ChessGame;
 import model.GameData;
 import client.ResponseException;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Scanner;
@@ -124,14 +125,14 @@ public class PostLoginOptions extends ChessMenuOptions {
         try{
             facade.playGame(authToken, color, game.gameID());
             currentGame = game.game();
-            //until functionality added (next phase)
             perspective = color.other();
-            drawBoard(out);
-            //Assuming this will stay
-            perspective = color;
-            drawBoard(out);
+            currentGameID = game.gameID();
+
+            setSocket(out, game);
         }catch(ResponseException e){
             handleError(out, e, TAKEN);
+        }catch(Exception e){
+            handleError(out, new ResponseException(500, e.getMessage()), TAKEN);
         }
     }
 
@@ -149,17 +150,19 @@ public class PostLoginOptions extends ChessMenuOptions {
         }
         out.println(SET_TEXT_COLOR_BLUE + "Attempting to observe game " + game.gameName() + "...." );
         try{
-            facade.observeGame(authToken, color, game.gameID());
             currentGame = game.game();
-            //until functionality added (next phase)
-            perspective = color.other();
-            drawBoard(out);
-            //Assuming this will stay
             perspective = color;
-            drawBoard(out);
-        }catch(ResponseException e){
-            handleError(out, e, TAKEN);
+            currentGameID = game.gameID();
+
+            setSocket(out, game);
+        } catch (Exception e) {
+            handleError(out, new ResponseException(500, e.getMessage()), TAKEN);
         }
+    }
+
+    private static void setSocket(PrintStream out, GameData game) throws Exception {
+        socket = facade.upgradeConnection(new GameplayOptions(out));
+        socket.connectToGame(authToken, game.gameID());
     }
 
     private static GameData getAndConfirmGame(Scanner in, PrintStream out, boolean play){

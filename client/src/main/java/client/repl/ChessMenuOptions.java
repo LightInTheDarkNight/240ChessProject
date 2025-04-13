@@ -1,28 +1,27 @@
 package client.repl;
 
 import chess.ChessGame;
-import chess.ChessPiece;
-import chess.ChessPosition;
 import client.ResponseException;
 import client.ServerFacade;
+import client.WebSocketFacade;
 
-import javax.websocket.Session;
 import java.io.PrintStream;
 import java.util.*;
 
 import static client.repl.EscapeSequences.*;
-import static client.repl.EscapeSequences.BLACK_PAWN;
 
 public class ChessMenuOptions {
     protected static ServerFacade facade = null;
+    protected static WebSocketFacade socket = null;
     protected static String authToken = "";
     protected static ChessGame currentGame = null;
+    protected static int currentGameID = 0;
     protected static ChessGame.TeamColor perspective = null;
-    protected static Session serverSession = null;
     protected static final String WHITE_SQUARE_COLOR = SET_BG_COLOR_LIGHT_GREY;
     protected static final String BLACK_SQUARE_COLOR = SET_BG_COLOR_DARK_GREY;
     protected static final String WHITE_PIECE_COLOR = SET_TEXT_COLOR_WHITE;
     protected static final String BLACK_PIECE_COLOR = SET_TEXT_COLOR_BLACK;
+    protected static final String HIGHLIGHT_SQUARE_COLOR = SET_BG_COLOR_YELLOW;
 
     public static void setFacade(ServerFacade server){
         facade = server;
@@ -135,99 +134,7 @@ public class ChessMenuOptions {
         out.print(RESET_TEXT_COLOR);
     }
 
-    protected static void drawBoard(PrintStream out){
-        if(currentGame == null){
-            throw new RuntimeException("Error: current game is not set.");
-        }
-        if(perspective == null){
-            throw new RuntimeException("Error: game perspective is not set.");
-        }
-        List<String> rows = new ArrayList<>(Arrays.asList(getRowStrings()));
-        if(perspective == ChessGame.TeamColor.BLACK){
-            rows = rows.reversed();
-        }
-        for(String row:rows){
-            out.print(row);
-        }
-    }
 
-    private static String[] getRowStrings(){
-        String[][][] squares = getSquares();
-        String[] rows = new String[10];
-        for(int i = 0; i < 10; i++){
-            rows[i] = getRowString(squares[i]);
-        }
-        return rows;
-    }
-
-    private static String[][][] getSquares(){
-        String[][][] out = new String[10][10][];
-        String[] rowLabels = new String[]{ONE_LABEL, TWO_LABEL, THREE_LABEL, FOUR_LABEL, FIVE_LABEL, SIX_LABEL,
-                SEVEN_LABEL, EIGHT_LABEL};
-        String[] columnLabels = new String[]{A_LABEL, B_LABEL, C_LABEL, D_LABEL, E_LABEL, F_LABEL, G_LABEL, H_LABEL};
-        for(int i = 8; i > 0; i --){
-            String[] row = getLabelStrings(rowLabels[i-1]);
-            String[] col = getLabelStrings(columnLabels[i-1]);
-            out[i][0] = out[i][9] = row;
-            out[0][i] = out[9][i] = col;
-        }
-        out[0][0] = out[0][9] = out[9][0] = out[9][9] = getLabelStrings(EMPTY);
-        for(int i = 1; i < 9; i ++){
-            for(int j = 1; j < 9; j ++){
-                String squareColor = BLACK_SQUARE_COLOR; // Dark square
-                if((i + j) % 2 == 0){
-                    squareColor = WHITE_SQUARE_COLOR; // Light square
-                }
-                out[i][j] = getSquareStrings(squareColor, currentGame.getBoard().getPiece(new ChessPosition(i, j)));
-            }
-        }
-        return out;
-    }
-
-    private static String[] getLabelStrings(String label){
-        return new String[]{SET_BG_COLOR_BLACK + EMPTY, SET_BG_COLOR_BLACK + SET_TEXT_COLOR_WHITE + label,
-                SET_BG_COLOR_BLACK + EMPTY};
-    }
-
-    private static String[] getSquareStrings(String squareColor, ChessPiece piece){
-        String pieceRep = squareColor + getPieceString(piece);
-        String rowBorder = squareColor + EMPTY;
-        return new String[]{rowBorder, pieceRep, rowBorder};
-    }
-
-    private static String getPieceString(ChessPiece piece){
-        if(piece == null){
-            return EMPTY;
-        }
-        String[] blackStrings = new String[]{
-                BLACK_KING, BLACK_QUEEN, BLACK_BISHOP, BLACK_KNIGHT, BLACK_ROOK, BLACK_PAWN};
-        String[] whiteStrings = new String[]{
-                WHITE_KING, WHITE_QUEEN, WHITE_BISHOP, WHITE_KNIGHT, WHITE_ROOK, WHITE_PAWN};
-        for(int i = 0; i < blackStrings.length; i++){
-            blackStrings[i] = BLACK_PIECE_COLOR + blackStrings[i];
-            whiteStrings[i] = WHITE_PIECE_COLOR + whiteStrings[i];
-        }
-        String[] toUse = switch(piece.getTeamColor()){
-            case WHITE -> whiteStrings;
-            case BLACK -> blackStrings;
-        };
-        return toUse[piece.getPieceType().ordinal()];
-
-    }
-
-    private static String getRowString(String[][] squares){
-        StringBuilder[] builders = new StringBuilder[]{
-                new StringBuilder(), new StringBuilder(), new StringBuilder()};
-        for (String[] square : squares) {
-            for (int j = 0; j < 3; j++) {
-                builders[j].append(square[j]);
-            }
-        }
-        for(StringBuilder builder:builders){
-            builder.append("\n");
-        }
-        return "" + builders[0] + builders[1] + builders[2];
-    }
 
     protected static void exitMessage(PrintStream out){
         out.println(SET_TEXT_COLOR_BLUE + "Operation exited. Returning to menu." + RESET_TEXT_COLOR);

@@ -31,4 +31,9 @@ public class Main {
         out.setFunction("ObserveGame", PostLoginOptions::observeGame);
         return out;
     }
+
+    private static Repl getGameplayMenu(){
+        Repl out = new Repl("[playing game] >>> ", "Game joined! please enter your next command:");
+        return out;
+    }
 }

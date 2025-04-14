@@ -17,6 +17,7 @@ public class ChessMenuOptions {
     protected static ChessGame currentGame = null;
     protected static int currentGameID = 0;
     protected static ChessGame.TeamColor perspective = null;
+    protected static String username = "";
     protected static final String WHITE_SQUARE_COLOR = SET_BG_COLOR_LIGHT_GREY;
     protected static final String BLACK_SQUARE_COLOR = SET_BG_COLOR_DARK_GREY;
     protected static final String WHITE_PIECE_COLOR = SET_TEXT_COLOR_WHITE;
@@ -84,9 +85,10 @@ public class ChessMenuOptions {
             prompt(out, fieldName);
             try{
                 field = in.nextInt();
-                in.nextLine();
             }catch(InputMismatchException e){
                 field = 0;
+            }finally{
+                in.nextLine();
             }
             if(field == -1){
                 return -1;

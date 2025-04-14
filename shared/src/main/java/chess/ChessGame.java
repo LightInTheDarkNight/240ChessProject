@@ -43,13 +43,12 @@ public class ChessGame {
      * Gets a valid moves for a piece at the given location
      *
      * @param startPosition the piece to get valid moves for
-     * @return Collection of valid moves for requested piece, or null if no piece at
-     * startPosition
+     * @return Collection of valid moves for requested piece, empty if no piece at startPosition
      */
     public ArrayList<ChessMove> validMoves(ChessPosition startPosition) {
         ChessPiece piece = board.getPiece(startPosition);
         if (piece == null) {
-            return null;
+            return new ArrayList<>();
         }
         return validateMoves(piece.pieceMoves(board, startPosition));
     }
@@ -175,7 +174,7 @@ public class ChessGame {
     public void makeMove(ChessMove move) throws InvalidMoveException {
         ChessPiece piece = board.getPiece(move.getStartPosition());
         var moveOptions = validMoves(move.getStartPosition());
-        boolean invalid = moveOptions == null
+        boolean invalid = moveOptions.isEmpty()
                        || !moveOptions.contains(move)
                        || currentTurn != piece.getTeamColor()
                        || status == GameStatus.WHITE_WON

@@ -34,7 +34,7 @@ public class GameplayOptions extends ChessMenuOptions implements MessageHandler.
                 currentGame = new Gson().fromJson(received.game(), ChessGame.class);
                 drawBoard(out, null);
             }
-            case ERROR -> out.println(SET_TEXT_COLOR_RED + received.message() + RESET_TEXT_COLOR);
+            case ERROR -> out.println(SET_TEXT_COLOR_RED + received.errorMessage() + RESET_TEXT_COLOR);
         }
         out.print(prompt);
     }
@@ -204,6 +204,7 @@ public class GameplayOptions extends ChessMenuOptions implements MessageHandler.
         return promo;
     }
 
+
     protected static void drawBoard(PrintStream out, ChessPosition highlightMoves){
         if(currentGame == null){
             throw new RuntimeException("Error: current game is not set.");
@@ -212,7 +213,7 @@ public class GameplayOptions extends ChessMenuOptions implements MessageHandler.
             throw new RuntimeException("Error: game perspective is not set.");
         }
         List<String> rows = new ArrayList<>(Arrays.asList(getRowStrings(highlightMoves)));
-        if(perspective == ChessGame.TeamColor.BLACK){
+        if(perspective == ChessGame.TeamColor.WHITE){
             rows = rows.reversed();
         }
         out.println();

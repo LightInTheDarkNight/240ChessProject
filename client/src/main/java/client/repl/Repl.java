@@ -50,9 +50,9 @@ public class Repl implements BiConsumer<Scanner, PrintStream>{
     }
 
     public void addExitFunction(String key, BiConsumer<Scanner, PrintStream> function){
-        exitWords.add(key.toLowerCase(Locale.ROOT));
+        exitWords.add(key);
         setFunction(key, function);
-        if(exitWords.size() == 2){
+        if(!key.equalsIgnoreCase("Exit")){
             setFunction("Exit", function);
         }
     }
@@ -65,7 +65,7 @@ public class Repl implements BiConsumer<Scanner, PrintStream>{
     }
 
     private void errorHandler(PrintStream out){
-        out.println(SET_TEXT_COLOR_RED + "Unrecognized command. Type help to see your command options.");
+        out.println(SET_TEXT_COLOR_RED + "Unrecognized command. Type 'help' to see your command options.");
         out.println("Capitalization is ignored." + RESET_TEXT_COLOR);
 
     }

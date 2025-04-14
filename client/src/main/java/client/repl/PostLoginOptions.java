@@ -4,6 +4,7 @@ import chess.ChessGame;
 import model.GameData;
 import client.ResponseException;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Scanner;
@@ -29,6 +30,7 @@ public class PostLoginOptions extends ChessMenuOptions {
     public static void createGame(Scanner in, PrintStream out){
         String gameName = getField(in, out, "your desired game name");
         if(gameName.isBlank()){
+            exitMessage(out);
             return;
         }
         try {
@@ -50,6 +52,7 @@ public class PostLoginOptions extends ChessMenuOptions {
             final String whiteHeader = "Playing White:";
             final String blackHeader = "Playing Black:";
             final String absent = SET_TEXT_COLOR_GREEN + "Available!" + SET_TEXT_COLOR_BLUE;
+            final int availableLengthVsVisibleDif = 20;
             final int idColumnWidth = idHeader.length();
             int longestBlack = blackHeader.length();
             int longestWhite = whiteHeader.length();
@@ -76,10 +79,12 @@ public class PostLoginOptions extends ChessMenuOptions {
                 pieces[i][1] = padTo(longestName, game.gameName());
 
                 String white = game.whiteUsername();
-                pieces[i][2] = padTo(longestWhite, white == null? absent : white);
+                pieces[i][2] = white == null ? padTo(longestWhite + availableLengthVsVisibleDif, absent)
+                                             : padTo(longestWhite, white);
 
                 String black = game.blackUsername();
-                pieces[i][3] = padTo(longestBlack, black == null? absent : black);
+                pieces[i][3] = black == null ? padTo(longestBlack + availableLengthVsVisibleDif, absent)
+                                             : padTo(longestWhite, black);
             }
 
             final String idHl = TABLE_HL.repeat(idHeader.length() + 2);
@@ -111,34 +116,34 @@ public class PostLoginOptions extends ChessMenuOptions {
     }
 
     public static void joinGame(Scanner in, PrintStream out){
-        if(socket != null){
-            out.println(SET_TEXT_COLOR_BLUE +
-                    "Failed LeaveGame operation detected. Would you like to try to re-join the previous game?"
-                    + RESET_TEXT_COLOR);
-            if(confirm(in, out)){
-                out.println(SET_TEXT_COLOR_BLUE + "Attempting to re-join game..." + RESET_TEXT_COLOR);
-                return;
-            }
-            out.println(SET_TEXT_COLOR_BLUE + "Ok." + RESET_TEXT_COLOR);
+        if (rejoinOldGame(in, out)) {
+            return;
         }
+
         GameData game = getAndConfirmGame(in, out, true);
         if(game == null){
             exitMessage(out);
-            return;
+            throw new RuntimeException();
         }
         ChessGame.TeamColor color = getColor(in, out);
         if(color == null){
             exitMessage(out);
-            return;
+            throw new RuntimeException();
         }
         out.println(SET_TEXT_COLOR_BLUE + "Attempting to join game " + game.gameName() + "...." );
         try{
-            facade.playGame(authToken, color, game.gameID());
+
+            if(!username.equals(switch(color){
+                case BLACK -> game.blackUsername();
+                case WHITE -> game.whiteUsername();
+            })){
+                facade.playGame(authToken, color, game.gameID());
+            }
             currentGame = game.game();
-            perspective = color.other();
+            perspective = color;
             currentGameID = game.gameID();
 
-            setSocket(out, game);
+            setUpSocket(out, game);
         }catch(ResponseException e){
             handleError(out, e, TAKEN);
             throw new RuntimeException();
@@ -149,15 +154,8 @@ public class PostLoginOptions extends ChessMenuOptions {
     }
 
     public static void observeGame(Scanner in, PrintStream out){
-        if(socket != null){
-            out.println(SET_TEXT_COLOR_BLUE +
-                    "Failed LeaveGame operation detected. Would you like to try to re-join the previous game?"
-                    + RESET_TEXT_COLOR);
-            if(confirm(in, out)){
-                out.println(SET_TEXT_COLOR_BLUE + "Attempting to re-join game..." + RESET_TEXT_COLOR);
-                return;
-            }
-            out.println(SET_TEXT_COLOR_BLUE + "Ok." + RESET_TEXT_COLOR);
+        if (rejoinOldGame(in, out)) {
+            return;
         }
         GameData game = getAndConfirmGame(in, out, false);
         if(game == null){
@@ -175,14 +173,39 @@ public class PostLoginOptions extends ChessMenuOptions {
             perspective = color;
             currentGameID = game.gameID();
 
-            setSocket(out, game);
+            setUpSocket(out, game);
         } catch (Exception e) {
             handleError(out, new ResponseException(500, e.getMessage()), TAKEN);
             throw new RuntimeException();
         }
     }
 
-    private static void setSocket(PrintStream out, GameData game) throws Exception {
+    private static boolean rejoinOldGame(Scanner in, PrintStream out) {
+        if(socket != null){
+            out.println(SET_TEXT_COLOR_BLUE +
+                    "Failed LeaveGame operation detected. Would you like to try to re-join the previous game?"
+                    + RESET_TEXT_COLOR);
+            if(confirm(in, out)){
+                out.println(SET_TEXT_COLOR_BLUE + "Attempting to re-join game..." + RESET_TEXT_COLOR);
+                try{
+                    socket.connectToGame(authToken, currentGameID);
+                    return true;
+                } catch (IOException e) {
+                    out.println(SET_TEXT_COLOR_RED + "Rejoin failed. Removing traces. Please try again fresh."
+                            + RESET_TEXT_COLOR);
+                    socket = null;
+                    currentGameID = 0;
+                    currentGame = null;
+                    perspective = null;
+                    throw new RuntimeException(e);
+                }
+            }
+            out.println(SET_TEXT_COLOR_BLUE + "Ok." + RESET_TEXT_COLOR);
+        }
+        return false;
+    }
+
+    private static void setUpSocket(PrintStream out, GameData game) throws Exception {
         socket = facade.upgradeConnection(new GameplayOptions(out));
         socket.connectToGame(authToken, game.gameID());
     }
@@ -200,8 +223,11 @@ public class PostLoginOptions extends ChessMenuOptions {
     }
 
     private static GameData getAndConfirmGame(Scanner in, PrintStream out, boolean play){
+        if(gamesLastRetrieval.length == 0){
+            listGames(in, out);
+        }
         String action = play ? "play" : "observe";
-        int gameID = getInt(in, out, "the id of the game you want to observe", gamesLastRetrieval.length+1);
+        int gameID = getInt(in, out, "the id of the game you want to " + action, gamesLastRetrieval.length);
         if(gameID == -1){
             return null;
         }

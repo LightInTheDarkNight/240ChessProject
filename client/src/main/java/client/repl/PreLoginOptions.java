@@ -52,11 +52,14 @@ public class PreLoginOptions extends ChessMenuOptions{
         String username = getField(in, out, "your username");
         if(username.isBlank()){
             exitMessage(out);
+            PreLoginOptions.username = "";
             return null;
         }
+        PreLoginOptions.username = username;
         String password = getField(in, out, "your password");
         if(password.isBlank()){
             exitMessage(out);
+            PreLoginOptions.username = "";
             return null;
         }
         if(!requireEmail){
@@ -66,6 +69,7 @@ public class PreLoginOptions extends ChessMenuOptions{
         String email = getField(in, out, "your email");
         if(email.isBlank()){
             exitMessage(out);
+            PreLoginOptions.username = "";
             return null;
         }
         return new UserData(username, password, email);

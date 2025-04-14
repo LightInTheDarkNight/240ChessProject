@@ -9,10 +9,8 @@ import javax.websocket.MessageHandler;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
-import java.util.function.BiConsumer;
 
 import static client.repl.EscapeSequences.*;
-import static client.repl.EscapeSequences.WHITE_PAWN;
 
 public class GameplayOptions extends ChessMenuOptions implements MessageHandler.Whole<String> {
     private final PrintStream out;
@@ -24,14 +22,6 @@ public class GameplayOptions extends ChessMenuOptions implements MessageHandler.
     }
     public static void redrawBoard(Scanner in, PrintStream out){
         drawBoard(out, null);
-    }
-
-    public static BiConsumer<Scanner, PrintStream> conditionedOnLeave(BiConsumer<Scanner, PrintStream> after){
-        return (in, out) -> {
-            if(leaveGame(in, out)){
-                after.accept(in, out);
-            }
-        };
     }
 
     public static void makeMove(Scanner in, PrintStream out){
@@ -80,7 +70,7 @@ public class GameplayOptions extends ChessMenuOptions implements MessageHandler.
         }
     }
 
-    public static boolean leaveGame(Scanner in, PrintStream out){
+    public static void leaveGame(Scanner in, PrintStream out){
         out.println(SET_TEXT_COLOR_BLUE + "Are you sure you want to leave the game?");
         if(confirm(in, out)){
             try{
@@ -90,12 +80,12 @@ public class GameplayOptions extends ChessMenuOptions implements MessageHandler.
                 perspective = null;
                 socket = null;
                 out.println(SET_TEXT_COLOR_BLUE + "You left the game. Returning to previous menu...");
-                return true;
             } catch (IOException e) {
-                out.println(SET_TEXT_COLOR_RED + "Sorry, an error occurred. Please try again." + RESET_TEXT_COLOR);
+                out.println(SET_TEXT_COLOR_RED + "Sorry, an error occurred. If the game needed to be opened for a "
+                        + "different player, use the JoinGame option again. Returning to previous menu..."
+                        + RESET_TEXT_COLOR);
             }
         }
-        return false;
     }
 
     public static void highlightLegalMoves(Scanner in, PrintStream out){

@@ -4,10 +4,10 @@ import chess.ChessGame;
 import model.GameData;
 import client.ResponseException;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collection;
 import java.util.Scanner;
+import java.util.function.BiConsumer;
 
 import static client.repl.EscapeSequences.*;
 import static java.lang.Integer.max;
@@ -111,6 +111,16 @@ public class PostLoginOptions extends ChessMenuOptions {
     }
 
     public static void joinGame(Scanner in, PrintStream out){
+        if(socket != null){
+            out.println(SET_TEXT_COLOR_BLUE +
+                    "Failed LeaveGame operation detected. Would you like to try to re-join the previous game?"
+                    + RESET_TEXT_COLOR);
+            if(confirm(in, out)){
+                out.println(SET_TEXT_COLOR_BLUE + "Attempting to re-join game..." + RESET_TEXT_COLOR);
+                return;
+            }
+            out.println(SET_TEXT_COLOR_BLUE + "Ok." + RESET_TEXT_COLOR);
+        }
         GameData game = getAndConfirmGame(in, out, true);
         if(game == null){
             exitMessage(out);
@@ -131,13 +141,24 @@ public class PostLoginOptions extends ChessMenuOptions {
             setSocket(out, game);
         }catch(ResponseException e){
             handleError(out, e, TAKEN);
+            throw new RuntimeException();
         }catch(Exception e){
             handleError(out, new ResponseException(500, e.getMessage()), TAKEN);
+            throw new RuntimeException();
         }
     }
 
     public static void observeGame(Scanner in, PrintStream out){
-
+        if(socket != null){
+            out.println(SET_TEXT_COLOR_BLUE +
+                    "Failed LeaveGame operation detected. Would you like to try to re-join the previous game?"
+                    + RESET_TEXT_COLOR);
+            if(confirm(in, out)){
+                out.println(SET_TEXT_COLOR_BLUE + "Attempting to re-join game..." + RESET_TEXT_COLOR);
+                return;
+            }
+            out.println(SET_TEXT_COLOR_BLUE + "Ok." + RESET_TEXT_COLOR);
+        }
         GameData game = getAndConfirmGame(in, out, false);
         if(game == null){
             exitMessage(out);
@@ -157,12 +178,25 @@ public class PostLoginOptions extends ChessMenuOptions {
             setSocket(out, game);
         } catch (Exception e) {
             handleError(out, new ResponseException(500, e.getMessage()), TAKEN);
+            throw new RuntimeException();
         }
     }
 
     private static void setSocket(PrintStream out, GameData game) throws Exception {
         socket = facade.upgradeConnection(new GameplayOptions(out));
         socket.connectToGame(authToken, game.gameID());
+    }
+
+    public static BiConsumer<Scanner, PrintStream> nextOnSuccessFirstThrows(BiConsumer<Scanner, PrintStream> first,
+                                                                  BiConsumer<Scanner, PrintStream> second){
+        return (in, out) -> {
+            try{
+                first.accept(in, out);
+            }catch(Exception e){
+                return;
+            }
+            second.accept(in, out);
+        };
     }
 
     private static GameData getAndConfirmGame(Scanner in, PrintStream out, boolean play){

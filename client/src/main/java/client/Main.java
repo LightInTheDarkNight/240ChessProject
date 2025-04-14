@@ -1,5 +1,6 @@
 package client;
 
+import client.repl.GameplayOptions;
 import client.repl.PostLoginOptions;
 import client.repl.PreLoginOptions;
 import client.repl.Repl;
@@ -11,7 +12,8 @@ public class Main {
     public static void main(String[] args) {
         var facade = new ServerFacade("http://localhost:8080");
         PreLoginOptions.setFacade(facade);
-        Repl post = getPostLoginMenu();
+        Repl game = getGameplayMenu();
+        Repl post = getPostLoginMenu(game);
         Repl pre = getPreLoginMenu(post);
         pre.accept(new Scanner(System.in), System.out);
     }
@@ -22,18 +24,25 @@ public class Main {
         return out;
     }
 
-    private static Repl getPostLoginMenu(){
+    private static Repl getPostLoginMenu(Repl gameplayMenu){
         Repl out = new Repl("[Logged in] >>> ", "Logged in! Please enter your next command:");
         out.addExitFunction("Logout", PostLoginOptions::logout);
         out.setFunction("CreateGame", PostLoginOptions::createGame);
         out.setFunction("ListGames", PostLoginOptions::listGames);
-        out.setFunction("JoinGame", PostLoginOptions::joinGame);
-        out.setFunction("ObserveGame", PostLoginOptions::observeGame);
+        out.setFunction("JoinGame", PostLoginOptions.nextOnSuccessFirstThrows(PostLoginOptions::joinGame,
+                gameplayMenu));
+        out.setFunction("ObserveGame", PostLoginOptions.nextOnSuccessFirstThrows(PostLoginOptions::observeGame,
+                gameplayMenu));
         return out;
     }
 
     private static Repl getGameplayMenu(){
         Repl out = new Repl("[playing game] >>> ", "Game joined! please enter your next command:");
+        out.addExitFunction("LeaveGame", GameplayOptions::leaveGame);
+        out.setFunction("RedrawBoard", GameplayOptions::redrawBoard);
+        out.setFunction("HighlightLegalMoves", GameplayOptions::highlightLegalMoves);
+        out.setFunction("MakeMove",GameplayOptions::makeMove);
+        out.setFunction("ResignGame", GameplayOptions::resignGame);
         return out;
     }
 }

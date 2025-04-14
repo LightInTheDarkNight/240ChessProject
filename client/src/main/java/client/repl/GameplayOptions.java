@@ -4,10 +4,12 @@ import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
-import com.google.gson.Gson;
-import websocket.messages.ServerMessage;
 
+import com.google.gson.Gson;
+
+import websocket.messages.ServerMessage;
 import javax.websocket.MessageHandler;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;

@@ -26,9 +26,9 @@ import static chess.ChessGame.TeamColor;
 @WebSocket
 public class WebSocketHandler {
     private static final Gson SERIALIZER = new Gson();
-    private static final Map<String, Session> sessionLookup = new ConcurrentHashMap<>();
-    private static final Map<Integer, List<String>> affectedLookup = new ConcurrentHashMap<>();
-    private static final Map<String, Integer> userToCurrentGameLookup = new ConcurrentHashMap<>();
+    private static final Map<String, Session> SESSION_LOOKUP = new ConcurrentHashMap<>();
+    private static final Map<Integer, List<String>> AFFECTED_LOOKUP = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> USER_TO_CURRENT_GAME_LOOKUP = new ConcurrentHashMap<>();
 
 
     @OnWebSocketMessage
@@ -53,10 +53,10 @@ public class WebSocketHandler {
     }
 
     private static void connect(Session session, String username, int gameID) throws IOException {
-        sessionLookup.put(username, session);
-        Integer old = userToCurrentGameLookup.put(username, gameID);
+        SESSION_LOOKUP.put(username, session);
+        Integer old = USER_TO_CURRENT_GAME_LOOKUP.put(username, gameID);
         if(old != null){
-            var oldTwo = affectedLookup.get(old);
+            var oldTwo = AFFECTED_LOOKUP.get(old);
             if(oldTwo != null){
                 oldTwo.remove(username);
             }
@@ -65,8 +65,8 @@ public class WebSocketHandler {
         if(game == null){
             return;
         }
-        affectedLookup.putIfAbsent(gameID, new ArrayList<>());
-        affectedLookup.get(gameID).add(username);
+        AFFECTED_LOOKUP.putIfAbsent(gameID, new ArrayList<>());
+        AFFECTED_LOOKUP.get(gameID).add(username);
         TeamColor color = getColor(username, game);
         sendToUser(ServerMessage.load(SERIALIZER.toJson(game.game())), username);
         notifyOthersJoin(gameID, username, color);
@@ -98,9 +98,9 @@ public class WebSocketHandler {
         }
         notifyOthersLeave(gameID, username, color);
 //        sendToUser(ServerMessage.notification("You left the game."), username);
-        affectedLookup.get(gameID).remove(username);
-        sessionLookup.remove(username).close();
-        userToCurrentGameLookup.remove(username);
+        AFFECTED_LOOKUP.get(gameID).remove(username);
+        SESSION_LOOKUP.remove(username).close();
+        USER_TO_CURRENT_GAME_LOOKUP.remove(username);
     }
 
     private static TeamColor getColor(String username, GameData game) {
@@ -140,7 +140,7 @@ public class WebSocketHandler {
             return;
         }
 
-        sendToList(affectedLookup.get(gameID), ServerMessage.notification(
+        sendToList(AFFECTED_LOOKUP.get(gameID), ServerMessage.notification(
                 "The " + color + " player, " + username + ", has resigned."));
 
     }
@@ -178,7 +178,7 @@ public class WebSocketHandler {
             return;
         }
 
-        List<String> allClients = affectedLookup.get(gameID);
+        List<String> allClients = AFFECTED_LOOKUP.get(gameID);
         sendToList(allClients, ServerMessage.load(SERIALIZER.toJson(data.game())));
         notifyOthersMove(gameID, username, color, move);
 
@@ -216,7 +216,7 @@ public class WebSocketHandler {
 
 
     private static List<String> getOthersAffected(int gameID, String username) {
-        List<String> toNotify = new ArrayList<>(affectedLookup.getOrDefault(gameID, new ArrayList<>()));
+        List<String> toNotify = new ArrayList<>(AFFECTED_LOOKUP.getOrDefault(gameID, new ArrayList<>()));
         toNotify.remove(username);
         return toNotify;
     }
@@ -232,7 +232,7 @@ public class WebSocketHandler {
     }
 
     private static void sendToUser(ServerMessage message, String username) throws IOException {
-        Session out = sessionLookup.get(username);
+        Session out = SESSION_LOOKUP.get(username);
         if(out.isOpen()){
             out.getRemote().sendString(SERIALIZER.toJson(message));
         }

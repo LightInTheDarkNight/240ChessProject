@@ -24,9 +24,9 @@ class GameServiceTest {
     private static final GameDAO GAME_LIST = new MemoryGameDAO();
     private static final UserDAO USER_LIST = new MemoryUserDAO();
     private static final AuthDAO AUTH_LIST = new MemoryAuthDAO();
-    private static final boolean testingWithDatabase = GAME_LIST.getClass().equals(DBGameDAO.class);
-    private static final UserService users = new UserService(USER_LIST, AUTH_LIST);
-    private static final ClearService clear = new ClearService(USER_LIST, GAME_LIST, AUTH_LIST);
+    private static final boolean TESTING_WITH_DATABASE = GAME_LIST.getClass().equals(DBGameDAO.class);
+    private static final UserService USERS = new UserService(USER_LIST, AUTH_LIST);
+    private static final ClearService CLEAR = new ClearService(USER_LIST, GAME_LIST, AUTH_LIST);
     private static GameService service = new GameService(GAME_LIST);
     private static final String[] A_FEW_NAMES = {"jackhammer", "johnathan", "coffee cup", "Jackson 5", "SQL sucks"};
 
@@ -34,13 +34,13 @@ class GameServiceTest {
     static void primary() {
         for(String name: A_FEW_NAMES){
             UserData user = new UserData(name, "password", "nothing");
-            assertDoesNotThrow(() -> users.register(user));
+            assertDoesNotThrow(() -> USERS.register(user));
         }
     }
 
     @AfterAll
     static void terminal() {
-        assertDoesNotThrow(clear::clearAll);
+        assertDoesNotThrow(CLEAR::clearAll);
     }
 
     @BeforeEach
@@ -57,6 +57,15 @@ class GameServiceTest {
             assert success;
         }
         return idResults;
+    }
+
+    private static void addGamePlayers(int id) throws DataAccessException {
+        try {
+            service.joinGame(A_FEW_NAMES[0], new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id));
+            service.joinGame(A_FEW_NAMES[1], new GameService.JoinGameRequest(ChessGame.TeamColor.WHITE, id));
+        } catch (AlreadyTakenException e) {
+            throw new RuntimeException("Something got really screwed up");
+        }
     }
 
 
@@ -96,12 +105,7 @@ class GameServiceTest {
     @Test
     void joinGameTest() throws DataAccessException {
         int id = service.createGame(new GameService.CreateGameRequest("test")).gameID();
-        try {
-            service.joinGame(A_FEW_NAMES[0], new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id));
-            service.joinGame(A_FEW_NAMES[1], new GameService.JoinGameRequest(ChessGame.TeamColor.WHITE, id));
-        } catch (AlreadyTakenException e) {
-            throw new RuntimeException("Something got really screwed up");
-        }
+        addGamePlayers(id);
         GameData game = service.getGame(id);
         assert game.blackUsername().equals(A_FEW_NAMES[0]);
         assert game.whiteUsername().equals(A_FEW_NAMES[1]);
@@ -112,12 +116,7 @@ class GameServiceTest {
         assertThrows(RuntimeException.class, () ->
                 service.joinGame(A_FEW_NAMES[0], new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, 5)));
         int id = service.createGame(new GameService.CreateGameRequest("test")).gameID();
-        try {
-            service.joinGame(A_FEW_NAMES[0], new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id));
-            service.joinGame(A_FEW_NAMES[1], new GameService.JoinGameRequest(ChessGame.TeamColor.WHITE, id));
-        } catch (AlreadyTakenException e) {
-            throw new RuntimeException("Something got really screwed up");
-        }
+        addGamePlayers(id);
         assertThrows(AlreadyTakenException.class, () ->
                 service.joinGame(A_FEW_NAMES[0], new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id)));
         assertThrows(AlreadyTakenException.class, () ->
@@ -139,7 +138,7 @@ class GameServiceTest {
             assertDoesNotThrow(()->current.game().makeMove(firstMove));
 
             assert current.game().equals(after);
-            if(testingWithDatabase){
+            if(TESTING_WITH_DATABASE){
 
                 assert !(current.equals(service.getGame(id)));
                 assert !(current.game().equals(service.getGame(id).game()));
@@ -158,7 +157,7 @@ class GameServiceTest {
         ChessMove firstMove = new ChessMove(new ChessPosition(2, 1), new ChessPosition(3, 1));
         ChessGame after = new ChessGame();
         assertDoesNotThrow(()->after.makeMove(firstMove));
-        if(testingWithDatabase){
+        if(TESTING_WITH_DATABASE){
             assertThrows(DataAccessException.class, () -> service.updateGame(invalidID, after));
         } else{
             assertThrows(RuntimeException.class, () -> service.updateGame(invalidID, after));
@@ -169,12 +168,7 @@ class GameServiceTest {
     @Test
     void leaveGameTest() throws DataAccessException {
         int id = service.createGame(new GameService.CreateGameRequest("test")).gameID();
-        try {
-            service.joinGame(A_FEW_NAMES[0], new GameService.JoinGameRequest(ChessGame.TeamColor.BLACK, id));
-            service.joinGame(A_FEW_NAMES[1], new GameService.JoinGameRequest(ChessGame.TeamColor.WHITE, id));
-        } catch (AlreadyTakenException e) {
-            throw new RuntimeException("Something got really screwed up");
-        }
+        addGamePlayers(id);
         assertDoesNotThrow(() -> service.leaveGame(id, ChessGame.TeamColor.BLACK));
         assert service.getGame(id).blackUsername() == null;
         assertDoesNotThrow(() -> service.leaveGame(id, ChessGame.TeamColor.WHITE));
@@ -184,7 +178,7 @@ class GameServiceTest {
     @Test
     void leaveGameThrows() throws DataAccessException {
         int id = service.createGame(new GameService.CreateGameRequest("test")).gameID();
-        Class<? extends Exception> exceptionClass = testingWithDatabase? DataAccessException.class :
+        Class<? extends Exception> exceptionClass = TESTING_WITH_DATABASE ? DataAccessException.class :
                 RuntimeException.class;
         //invalid id
         assertThrows(exceptionClass, () -> service.leaveGame(id + 1, ChessGame.TeamColor.BLACK));

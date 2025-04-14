@@ -4,6 +4,8 @@ import chess.ChessGame;
 import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
+import com.google.gson.Gson;
+import websocket.messages.ServerMessage;
 
 import javax.websocket.MessageHandler;
 import java.io.IOException;
@@ -13,13 +15,28 @@ import java.util.*;
 import static client.repl.EscapeSequences.*;
 
 public class GameplayOptions extends ChessMenuOptions implements MessageHandler.Whole<String> {
+
+    public static String prompt = SET_TEXT_COLOR_GREEN + "[Game Option] >>> " + RESET_TEXT_COLOR;
+
     private final PrintStream out;
+
     public GameplayOptions(PrintStream out){
         this.out = out;
     }
-    public void onMessage(String message){
 
+    public void onMessage(String message){
+        ServerMessage received = new Gson().fromJson(message, ServerMessage.class);
+        switch(received.serverMessageType()) {
+            case NOTIFICATION -> out.println(SET_TEXT_COLOR_GREEN + received.message() + RESET_TEXT_COLOR);
+            case LOAD_GAME -> {
+                currentGame = new Gson().fromJson(received.game(), ChessGame.class);
+                drawBoard(out, null);
+            }
+            case ERROR -> out.println(SET_TEXT_COLOR_RED + received.message() + RESET_TEXT_COLOR);
+        }
+        out.print(prompt);
     }
+
     public static void redrawBoard(Scanner in, PrintStream out){
         drawBoard(out, null);
     }
@@ -196,6 +213,7 @@ public class GameplayOptions extends ChessMenuOptions implements MessageHandler.
         if(perspective == ChessGame.TeamColor.BLACK){
             rows = rows.reversed();
         }
+        out.println();
         for(String row:rows){
             out.print(row);
         }

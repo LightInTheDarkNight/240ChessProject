@@ -37,7 +37,7 @@ public class Main {
     }
 
     private static Repl getGameplayMenu(){
-        Repl out = new Repl("[playing game] >>> ", "Game joined! please enter your next command:");
+        Repl out = new Repl(GameplayOptions.prompt, "Game joined! please enter your next command:");
         out.addExitFunction("LeaveGame", GameplayOptions::leaveGame);
         out.setFunction("RedrawBoard", GameplayOptions::redrawBoard);
         out.setFunction("HighlightLegalMoves", GameplayOptions::highlightLegalMoves);
